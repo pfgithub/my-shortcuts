@@ -111,7 +111,7 @@ end if
 if Equals "Pick Shortcut To Update"
   
   GetVariable (v:Data{key:list})
-  GetDictionaryFromInput
+  GetDictionaryFromInput -> mv:Dictionary
   GetDictionaryValue "All Keys"
   repeatWithEach
     
@@ -122,16 +122,171 @@ if Equals "Pick Shortcut To Update"
     GetVariable (v:Scut{as:dictionary,key:saved})
     SetVariable LocalData
     
-    Text "BEGIN:VCARD"
+    Text "BEGIN:VCARD\nVERSION:3.0\nN;ENCODING=utf-8:\(v:Scut{as:Dictionary,key:name})\nORG:\(v:LocalData{as:Dictionary,key:version}) -> \(v:WebData{as:Dictionary,key:version});\nPHOTO;ENCODING=b:\(v:Scut{as:Dictionary,key:icon})\nEND:VCARD" // issue 8/9
     
+  end repeat
+  combineText "New Lines"
+  // TODO text copypaste from shortcuts
+  SetName "\(v:Scut{as:dictionary,key:name}).vcf" -> mv:SetName
+  GetVariable (mv:SetName{as:Contact})
+  ChooseFromList "Shortcuts with available updates" -> mv:ChosenItem
+  
+  if Equals "Don't Update"
+    Nothing
+    ExitShortcut
+  otherwise
   end
+  
+  GetVariable (mv:Dictionary)
+  GetDictionaryValue Value (mv:ChosenItem)
+  GetDictionaryFromInput
+  SetVariable ShortcutToUpdate
+  GetDictionaryValue Value data -> mv:DictionaryValue
+  
+  Text "Update for \(v:ShortcutToUpdate{key:name}):\nVersion \(mv:DictionaryValue{as:Dictionary,key:Version})\n\n\(mv:DictionaryValue{as:Dictionary,key:Notes})" -> mv:Text
+  ChooseFromMenu (mv:Text)
+  | Update
+  | I no longer have this shortcut
+  | Back
+  case Update
+    getVariable (v:ShortcutToUpdate)
+    ExitShortcut
+  case No longer have
+    getFile "iCloud Drive" false (v:Filename) false
+    setDictionaryValue (v:ShortcutToUpdate{key:id}) "removed"
+    saveFile "iCloud Drive" false (v:Filename) true
+    showResult "This shortcut will no longer be checked for updates unless you run it again."
+    nothing
+    exitShortcut
+  case Back
+  end
+  
+  getVariable(v:Data)
+  runShortcut (v:ThisShortcut) false
+  exitShortcut
   
 otherwise
 end if
 
+if Equals "List Updatable Shortcuts"
+  Dictionary{}
+  SetVariable PickToUpdate
+  
+  getVariable (v:Data{key:list})
+  repeatWithEach
+    
+    if Equals "removed"
+    otherwise
+      Text (v:"Repeat Item")
+      getDictionaryFromInput
+      getDictionaryValue Value name
+      getVariable (v:PickToUpdate)
+      setDictionaryValue (v:"Repeat Item"{as:Dictionary key:name}) (v:"Repeat Item")
+      setVariable (v:PickToUpdate)
+    end if
 
+  end repeat
+  
+  getVariable (v:PickToUpdate)
+  exitShortcut
 
+otherwise
+end if
 
+if Equals "Check For Updates"
+  
+  Nothing -> v:Summary
+  GetMyShortcuts -> v:MyShortcuts
+  GetFile "iCloud Drive" false (v:Filename) true -> v:File
+  
+  getVariable(v:Data{key:ids})
+  count Items
+  if Equals 0
+    
+    text "All your compatible shortcuts are up to date!"
+    setVariable UpToDateText
+    
+    getVariable (v:File)
+    getDictionaryValue "All Keys"
+    
+  otherwise
+    
+    Nothing
+    SetVariable UpToDateText
+    
+    GetVariable (v:Data{key:ids})
+    
+  end if
+  
+  repeatWithEach
+    
+    getVariable (v:File)
+    getDictionaryValue Value (v:"Repeat Item") -> mv:DictionaryValue
+    count Items
+    if Equals 0
+      text "removed"
+    otherwise
+      getVariable (mv:DictionaryValue)
+    end if
+    
+    setVariable (v:ShortcutData)
+    
+    if Equals removed
+      nothing
+    otherwise
+      if ^(v:MyShortcuts) Equals (v:ShortcutData{as:Dictionary,key:name})
+      otherwise
+        
+        Text "\(v:ShortcutData{as:Dictionary,key:name}) (routinehub id \(v:"Repeat Item")) might not be installed anymore. If you don't have it anymore, remove it from the Manage Shortcuts button on the main menu."
+        AddToVariable Summary
+        if ^(text "false") Equals "true"
+          GetVariable (v:File)
+          SetDictionaryValue (v:"Repeat Item") "removed"
+          SaveFile "iCloud Drive" false (v:Filename) true
+        otherwise
+        end if
+        
+        Nothing
+        
+      end if
+      
+      URL "https://routinehub.co/api/v1/shortcuts/\(v:"Repeat Item")/versions/latest"
+      GetContentsOfURL
+      
+      GetDictionaryFromInput
+      SetVariable URLCont
+      getDictionaryValue Value result
+      getDictionaryFromInput -> mv:Result
+      if Equals error
+        text "The shortcut \(mv:Result{key:name}) (routinehub id \(v:"Repeat Item")) could not be checked for updates because of the RoutineHub error: \(v:URLCont{key:message})"
+        AddToVariable Summary
+        GetVariable (v:File)
+  
+        SetDictionaryValue (v:"Repeat Item") removed
+        saveFile "iCloud Drive" false (v:Filename) true
+        setVariable File
+        
+      otherwise
+      end if
+      
+      GetVariable (v:File)
+      GetDictionaryValue Value (v:"Repeat Item:)
+      
+      
+      
+      
+    end if
+    
+    
+    
+  end repeat
+  
+  
+  
+  
+  
+otherwise
+end if
 
 
 
