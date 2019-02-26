@@ -1,0 +1,57 @@
+getDictionaryFromInput
+setVariable (v:Data)
+
+Comment
+| Created by
+| @pfg#4865
+| https://routinehub.co/user/pfg
+| /u/pfg___
+
+Dictionary{
+  name: "Check For Updates",
+  version: "1.6.1"
+} -> mv:CheckForUpdatesDictionary
+
+GetFile a{
+  service="iCloud Drive"
+  showDocumentPicker=false
+  filePath="AutoUpdateData.json"
+  errorIfNotFound=false
+}
+
+SetDictionaryValue a{key=793 value=(mv:CheckForUpdatesDictionary)}
+
+SaveFile a{
+  service="iCloud Drive"
+  askWhereToSave=false
+  destinationPath="AutoUpdateData.json"
+  overwriteIfFileExists=true
+}
+
+Text "AutoUpdateData.json" -> v:Filename
+Text "Check For Updates" -> v:ThisShortcut
+
+getVariable(v:Data{key:action})
+if Equals "Compare Versions"
+  getVariable(v:Data{key:current})
+  count Characters
+  if Equals 0
+    getVariable(v:Data{key:new})
+    count Characters
+    if Equals 0
+      Text "Up to date"
+      exitShortcut
+    otherwise
+    end if
+  otherwise
+  end if
+
+  dictionary{
+    version: (v:Data{key:current})
+    action: "Split Decimals"
+  }
+  RunShortcut (v:ThisShortcut)
+
+  
+otherwise
+end if
