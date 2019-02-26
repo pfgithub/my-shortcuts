@@ -12,6 +12,9 @@ Dictionary{
   version: "1.6.1"
 } -> mv:CheckForUpdatesDictionary
 
+Text "noerr" -> v:"Repeat Item"
+Text "noerr" -> v:"Repeat Index"
+
 GetFile a{
   service="iCloud Drive"
   showDocumentPicker=false
@@ -50,8 +53,148 @@ if Equals "Compare Versions"
     version: (v:Data{key:current})
     action: "Split Decimals"
   }
-  RunShortcut (v:ThisShortcut)
+  RunShortcut (v:ThisShortcut) -> mv:SplitDecimalResult
 
+  dictionary{
+    action: "Split Decimals"
+    version: (v:Data{key:new})
+  }
+  RunShortcut (v:ThisShortcut) -> mv:SplitDecimalResultNew
+  
+  GetDictionaryValue a{get=Value,key=number}
+  if "Is Greater Than" (mv:SplitDecimalResult{as:Dictionary,key:number})
+    Text "New version available"
+    ExitShortcut
+  otherwise
+    if "Is Less Than" (mv:SplitDecimalResult{as:Dictionary,key:number})
+      Text "Up to date"
+      exitShortcut
+    otherwise
+      Dictionary{
+        action:"Compare Versions"
+        current: (mv:SplitDecimalResult{as:Dictionary,key:number})
+        new: (mv:SplitDecimalResultNew{as:Dictionary,key:number})
+      }
+      RunShortcut (v:ThisShortcut)
+      ExitShortcut
+    end if
+  end if
+  
+  Text "Up to date"
+  exitShortcut  
   
 otherwise
 end if
+
+if Equals "Split Decimals"
+  getVariable (v:Data{key:version})
+  MatchText "^([0-9]+).?"
+  GetGroupFromMatchedText "Group At Index" 1 -> mv:GroupFromMatchedText
+  Count Items
+  If Equals 0
+    Number 0
+  otherwise
+    Number (mv:GroupFromMatchedText)
+  end if -> mv:IfResult
+  
+  getVariable (v:Data{key:version})
+  replaceText "^([0-9]+).?" "" a{caseSensitive: true, regularExpression: true} -> mv:ReplacedText
+  
+  Dictionary{
+    number: (mv:IfResult)
+    next: (mv:ReplacedText)
+  }
+  ExitShortcut
+otherwise
+end if
+
+if Equals "Pick Shortcut To Update"
+  
+  GetVariable (v:Data{key:list})
+  GetDictionaryFromInput
+  GetDictionaryValue "All Keys"
+  repeatWithEach
+    
+    getVariable (v:Data{key:List})
+    getDictionaryValue Value (v:"Repeat Item") -> v:Scut
+    getDictionaryValue Value data -> v:WebData
+    
+    GetVariable (v:Scut{as:dictionary,key:saved})
+    SetVariable LocalData
+    
+    Text "BEGIN:VCARD"
+    
+  end
+  
+otherwise
+end if
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
