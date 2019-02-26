@@ -270,7 +270,7 @@ if Equals "Check For Updates"
       end if
       
       GetVariable (v:File)
-      GetDictionaryValue Value (v:"Repeat Item:)
+      GetDictionaryValue Value (v:"Repeat Item")
       
       
       
