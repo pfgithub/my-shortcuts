@@ -53,13 +53,13 @@ if Equals "Compare Versions"
     version: (v:Data{key:current})
     action: "Split Decimals"
   }
-  RunShortcut (v:ThisShortcut) -> mv:SplitDecimalResult
+  RunShortcut (v:ThisShortcut) false -> mv:SplitDecimalResult
 
   dictionary{
     action: "Split Decimals"
     version: (v:Data{key:new})
   }
-  RunShortcut (v:ThisShortcut) -> mv:SplitDecimalResultNew
+  RunShortcut (v:ThisShortcut) false -> mv:SplitDecimalResultNew
   
   GetDictionaryValue a{get=Value,key=number}
   if "Is Greater Than" (mv:SplitDecimalResult{as:Dictionary,key:number})
@@ -75,7 +75,7 @@ if Equals "Compare Versions"
         current: (mv:SplitDecimalResult{as:Dictionary,key:number})
         new: (mv:SplitDecimalResultNew{as:Dictionary,key:number})
       }
-      RunShortcut (v:ThisShortcut)
+      RunShortcut (v:ThisShortcut) false
       ExitShortcut
     end if
   end if
@@ -270,86 +270,296 @@ if Equals "Check For Updates"
       end if
       
       GetVariable (v:File)
-      GetDictionaryValue Value (v:"Repeat Item")
+      GetDictionaryValue Value (v:"Repeat Item") -> mv:Saved
       
-      
-      
+      Dictionary{
+        action: "Compare Versions",
+        current: (mv:Saved{as:Dictionary,key:version})
+        new: (v:URLCont{key:Version})
+      }
+      runshortcut a{
+        shortcut=(v:ThisShortcut),
+        showwhilerunning=false
+      }
+
+      if a{
+        input="Equals",
+        value="Up to date"
+      }
+        Nothing
+      otherwise
+        getvariable a{
+          variable=(v:URLCont{key:URL})
+        }
+        replacetext a{
+          findtext="/shortcuts",
+          replacewith="/shortcuts/api/records",
+          casesensitive=true,
+          regularexpression=false
+        }
+        getcontentsofurl
+
+        getdictionaryvalue a{
+          get="Value",
+          key="fields"
+        }
+        getdictionaryvalue a{
+          get="Value",
+          key=icon
+        }
+        getdictionaryvalue a{
+          get="Value",
+          key=downloadURL
+        }
+        getcontentsofurl
+        
+        getimagesfrominput
+        
+        resizeimage a{
+          width=32
+        }
+        base64encode a{
+          mode="Encode",
+          linebreaks="None"
+        } -> mv:Base64Encoded
+        
+        dictionary {
+          id: (v:"Repeat Item")
+          name: (mv:Saved{as:dictionary,key:name})
+          data: (v:URLCont)
+          saved: (mv:Saved{as:dictionary,key:text})
+          icon: (mv:Base64Encoded)
+        }
+        
+      end if
       
     end if
     
+  end repeat -> mv:RepeatResults
+  count a{
+    count="Items"
+  } -> mv:OtherCount
+  Text "\n\n\n" -> v:"__temp"
+  
+  getVariable (v:Summary)
+  count a{
+    count="Items"
+  }
+  if a{
+    input="Equals",
+    value=0
+  }
+  otherwise
+    getvariable a{
+      variable=(v:Summary)
+    }
+    combinetext a{
+      separator="Custom",
+      custom=(v:"__temp")
+    } -> mv:CombinedText
+    showAlert a{showcancelbutton=true}
+    | Some potential errors occured while checking for updates:
+    |
+    | \(mv:CombinedText)
+    |
+    | ok=continue
+    | cancel=stop
     
-    
-  end repeat
+  end if
   
+  getvariable a{
+    variable=(mv:OtherCount)
+  }
+  if "Equals" 0
+    getVariable(v:UpToDateText)
+    count Items
+    if "Equals" 0
+    otherwise
+      showresult (v:UpToDateText)
+    end if
+
+    exitShortcut
+
+  otherwise
+
+    getVariable(mv:RepeatResults)
+
+  end if -> mv:IfResult
+
+  Dictionary{action:"List Updatable Shortcuts", list: [a]}
+  SetDictionaryValue list (mv:IfResult)
+  RunShortcut (v:ThisShortcut) false -> mv:RunShortcut
+
+  Dictionary{action:"Pick Shortcut To Update", list:(mv:RunShortcut)}
+
+  RunShortcut (v:ThisShortcut) false
+  getdictionaryfrominput
+  setvariable a{
+    variable="ToUpdate"
+  }
+  Count Items
+  if a{
+    input="Equals",
+    value=0
+  }
+    exitShortcut
+  otherwise
+  end
   
-  
+  getVariable (v:ToUpdate)
+  setVariable (v:ToUpdate)
+  GetDictionaryValue Value data -> mv:DictionaryValue
+  Dictionary{
+    action: "Install Shortcut"
+    id:(v:ToUpdate{as:Dictionary,key:id})
+    web: (mv:DictionaryValue)
+    name: (v:ToUpdate{as:Dictionary,key:name})
+  }
+  RunShortcut (v:ThisShortcut) false
+
+  exitShortcut
   
   
 otherwise
 end if
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+if Equals "Install Shortcut"
+  getVariable (v:Data{key:web})
+  count Items
+  if Equals 0
+    url "https://routinehub.co/api/v1/shortcuts/\(v:Data{key:id})/versions/latest"
+    getContentsOfURL
+  otherwise
+    getVariable (v:Data{key:web})
+  end
+
+  getDictionaryFromInput
+  setVariable VersionData
+
+  getfile a{
+    service="iCloud Drive",
+    showdocumentpicker=false,
+    filepath="\(v:Filename)",
+    errorifnotfound=false
+  } -> mv:File
+  getDictionaryValue Value (v:Data{key:id})
+  SetDictionaryValue version (v:VersionData{key:Version}) -> mv:Dictionary
+
+  getVariable (mv:File)
+  setDictionaryValue (v:Data{key:id}) (mv:Dictionary)
+
+  savefile a{
+    service="iCloud Drive",
+    askwheretosave=false,
+    destinationpath=(v:Filename),
+    overwriteiffileexists=true
+  }
+  url "https://routinehub.co/download/\(v:VersionData{key:id})"
+  OpenURLs
+  ExitShortcut
+  
+otherwise
+end
+
+List
+| Check for Updates
+| Add unsupported shortcut
+| Manage Shortcuts
+
+ChooseFromList
+
+if Equals "Check for Updates"
+  Dictionary{action:"Check For Updates"}
+  runShortcut (v:ThisShortcut) false
+  exitShortcut
+otherwise
+end
+
+if Equals "Add unsupported shortcut"
+  /*
+  showAlert "Alert"
+  | To check for updates on a shortcut that does not have cfu integrated, add it here. You need to know the shortcut's name, routinehub ID, and what version you downloaded.
+  GetMyShortcuts
+  ChooseFromList
+  GetName
+  SetVariable (v:scutname)
+  AskForInput "RoutineHub ID for \(v:scutname)" -> mv:rhid
+  AskForInput "Your Current Version (use 0 if unsure)" 0 Text -> mv:version
+
+  Dictionary{
+    name: (v:scutname)
+    version: (mv:version)
+  } -> mv:Dictionary
+  getfile a{
+    service="iCloud Drive",
+    showdocumentpicker=false,
+    filepath=(v:Filename),
+    errorifnotfound=false
+  }
+  SetDictionaryValue (mv:rhid) (mv:Dictionary)
+  savefile a{
+    service="iCloud Drive",
+    askwheretosave=false,
+    destinationpath=(v:Filename),
+    overwriteiffileexists=true
+  }
+  
+  showResult
+  | Shortcut \(v:scutname) can now be checked for updates.
+
+  Nothing
+  */
+  showalert "Alert" "Coming Soon!"
+otherwise
+end
+
+if Equals "Manage Shortcuts"
+  Dictionary{}
+  SetVariable (v:Upablescuts)
+  GetFile "iCloud Drive" false (v:Filename) false
+  SetVariable File
+  GetDictionaryValue "All Keys"
+  RepeatWithEach
+    getVariable (v:File)
+    getDictionaryValue Value (v:"Repeat Item") -> mv:DictionaryValue
+    if Equals "removed"
+    otherwise
+      GetVariable (v:Upablescuts)
+      SetDictionaryValue (mv:DictionaryValue{as:Dictionary,key:name}) (v:"Repeat Item")
+      setVariable (v:Upablescuts)
+    end
+  end repeat
+
+  getVariable (v:Upablescuts)
+  chooseFromList "Choose shortcuts to manage" true false
+
+  choosefrommenu "What to do?"
+  | Stop checkinf for updates
+  case "stop checking..."
+    
+  end
+  
+  repeatwitheach
+    getVariable(v:File)
+    setDictionaryValue(v:"Repeat Item") "removed"
+    setVariable (v:File)
+  end
+  
+  getVariable (v:File)
+  savefile a{
+    service="iCloud Drive",
+    askwheretosave=false,
+    destinationpath=(v:Filename),
+    overwriteiffileexists=true
+  }
+  showResult
+  | Check for updates will no longer check the shortcuts you selected for updates (unless you run them again)
+  
+  nothing
+
+
+otherwise
+end
+
+Nothing
+RunShortcut (v:ThisShortcut) false
