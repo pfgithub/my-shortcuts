@@ -12,6 +12,8 @@ SetVariable Input
 Text "Icon List v2" -> v:ThisShortcut
 
 createfolder service="iCloud Drive" "/IconListV2"
+createfolder service="iCloud Drive" "/IconListV2/MyLists"
+
 
 /*
 // Usage: Escape "text"
@@ -27,7 +29,7 @@ GetVariable v:Input:action
 if Equals "Escape"
     GetVariable v:Input:text
     replacetext "\\" "\\\\"
-    replacetext "\n" " "
+    replacetext (Text "\n") " "
     replacetext ";" "\\;"
     exitShortcut
 otherwise
@@ -104,6 +106,7 @@ if Equals "ChoosePhoto"
     | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:Image)\nNOTE;CHARSET=utf-8:standardImage\nN;CHARSET=utf-8:Original Size;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:SizedImage)\nNOTE;CHARSET=utf-8:sizedImage\nN;CHARSET=utf-8:Fit in Circle;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:noImage\nN;CHARSET=utf-8:No Image;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:differentPhoto\nN;CHARSET=utf-8:Choose Different Photo;;;\nEND:VCARD
     
     runShortcut v:ThisShortcut false ^(Dictionary{ action: AsContact, vcard: v:vCard }) 
     chooseFromList -> mv:ChosenItem
@@ -113,6 +116,7 @@ if Equals "ChoosePhoto"
     if Equals "standardImage"; getVariable v:Image; otherwise; end
     if Equals "sizedImage"; getVariable v:SizedImage; otherwise; end
     if Equals "noImage"; text " "; otherwise; end
+    if Equals "differentPhoto"; runShortcut v:ThisShortcut false ^(Dictionary{ action: ChoosePhoto }); otherwise; end
 
     exitShortcut
 otherwise
@@ -178,6 +182,33 @@ if Equals "EditItem"
 
     runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: v:CardData }) 
     exitShortcut
+otherwise
+end
+
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: EditList, items: [...items] }) 
+// edits a given list of items
+// remember, to pass a list into a dictionary you need to create a dictionary with no list and set dictionary value
+if Equals "EditList"
+
+    getVariable v:Input:items -> v:Items
+
+    repeatWithEach ^(v:Items)
+
+        getVariable ^(v:"Repeat Item")
+        setdictionaryvalue key="note" value=(v:"Repeat Index")
+        runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: v:"Repeat Item" })
+        
+    end repeat
+
+    combinetext separator="New Lines" -> mv:CurrentListvCard
+
+    text -> mv:vCard
+    | \(mv:CurrentListvCard)
+    | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:-------;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:addItem\nN;CHARSET=utf-8:Add Item;;;\nEND:VCARD
+    
+
+
 otherwise
 end
 
