@@ -110,7 +110,7 @@ if Equals "ChoosePhoto"
     getVariable v:Image{as:Image,get:Height}
     
     if "Is Greater Than" 123
-      resizeimage ^(mv:SelectedPhoto) height=123 -> v:Image
+      resizeimage ^(mv:SelectedPhoto) width="" height=123 -> v:Image
     otherwise
     end
     
@@ -119,19 +119,24 @@ if Equals "ChoosePhoto"
     base64encode mode="Decode"
     resizeimage width=123 height=123 -> mv:TransparentImage
 
-    overlayimage v:Image showimageeditor=false position="Center" -> v:Image
-    overlayimage v:Image showimageeditor=false position="Center" width=87 height=87 -> v:SizedImage
+    overlayimage ^(mv:TransparentImage) v:Image showimageeditor=false position="Center" -> v:Image
+    overlayimage ^(mv:TransparentImage) v:Image showimageeditor=false position="Center" width=87 height=87 -> v:SizedImage
     
     base64encode ^(v:Image) mode="Encode" linebreaks="None" -> v:Image
     base64encode ^(v:SizedImage) mode="Encode" linebreaks="None" -> v:SizedImage
     
 
     // show both and pick which to use
-    text
+    text -> v:vCard
     | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:Image)\nNOTE;CHARSET=utf-8:standardImage\nN;CHARSET=utf-8:Original Size;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:SizedImage)\nNOTE;CHARSET=utf-8:sizedImage\nN;CHARSET=utf-8:Fit in Circle;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:noImage\nN;CHARSET=utf-8:No Image;;;\nEND:VCARD
     
+    runShortcut v:ThisShortcut false ^(Dictionary{ action: AsContact, vcard: v:vCard }) 
+    chooseFromList -> mv:ChosenItem
+
+    getVariable mv:ChosenItem{as:Contact,get:Notes}
+
     if Equals "standardImage"; getVariable v:Image; otherwise; end
     if Equals "sizedImage"; getVariable v:SizedImage; otherwise; end
     if Equals "noImage"; text " "; otherwise; end
