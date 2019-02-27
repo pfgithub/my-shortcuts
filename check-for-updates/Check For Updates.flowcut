@@ -72,8 +72,8 @@ if Equals "Compare Versions"
     otherwise
       Dictionary{
         action:"Compare Versions"
-        current: (mv:SplitDecimalResult{as:Dictionary,key:number})
-        new: (mv:SplitDecimalResultNew{as:Dictionary,key:number})
+        current: (mv:SplitDecimalResult{as:Dictionary,key:next})
+        new: (mv:SplitDecimalResultNew{as:Dictionary,key:next})
       }
       RunShortcut (v:ThisShortcut) false
       ExitShortcut
