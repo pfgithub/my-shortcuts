@@ -14,33 +14,6 @@ Text "Icon List v2" -> v:ThisShortcut
 createfolder service="iCloud Drive" "/IconListV2"
 
 /*
-if ^(Count ^(v:Input) Items) Equals 0
-    getfile a{
-      service="iCloud Drive",
-      showdocumentpicker=false,
-      filepath="/IconListV2/CurrentPage.json",
-      errorifnotfound=false
-    }
-    setVariable v:Input
-    if ^(count Items) Equals 0
-    otherwise
-        chooseFromMenu "Previous edits recovered"
-        | Continue editing
-        | Discard edits
-        case Continue
-        case Discard
-            Dictionary{} -> v:Input
-        end
-    end
-otherwise
-    getVariable v:Input
-end
-
-savefile ^(v:Input) service="iCloud Drive" false "/IconListV2/CurrentPage.json" true
-*/
-
-
-/*
 // Usage: Escape "text"
 @defmacro Escape @:text{type:text}
     runShortcut v:ThisShortcut false ^(Dictionary{ action: Escape, text: "\(@:text)" })
