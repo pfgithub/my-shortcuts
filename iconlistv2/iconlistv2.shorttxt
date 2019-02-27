@@ -37,7 +37,6 @@ otherwise
 end
 
 savefile ^(v:Input) service="iCloud Drive" false "/IconListV2/CurrentPage.json" true
-
 */
 
 
@@ -66,7 +65,7 @@ end
 if Equals "CreateCard" 
     getVariable v:Input:carddata -> v:CardData
 
-    if ^(Count "Characters" ^(v:CardData:photo)) "Equals" 0
+    if ^(Count "Characters" ^(v:CardData:photo)) "Equals" 1
         text ""
     otherwise
         text "PHOTO;ENCODING=b:\(v:CardData:photo)"
@@ -101,9 +100,43 @@ if Equals "AsContact"
 otherwise
 end
 
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: ChoosePhoto }) 
+// prompts to select a photo
 if Equals "ChoosePhoto"
+    selectphotos selectmultiple=false -> mv:SelectedPhoto
 
+    // resize to 123x123 (@3x)
+    resizeimage width=123 -> v:Image
+    getVariable v:Image{as:Image,get:Height}
+    
+    if "Is Greater Than" 123
+      resizeimage ^(mv:SelectedPhoto) height=123 -> v:Image
+    otherwise
+    end
+    
+    // place on top of a transparent image to make a 123x123
+    Text "R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAAAICTAEAOw=="
+    base64encode mode="Decode"
+    resizeimage width=123 height=123 -> mv:TransparentImage
 
+    overlayimage v:Image showimageeditor=false position="Center" -> v:Image
+    overlayimage v:Image showimageeditor=false position="Center" width=87 height=87 -> v:SizedImage
+    
+    base64encode ^(v:Image) mode="Encode" linebreaks="None" -> v:Image
+    base64encode ^(v:SizedImage) mode="Encode" linebreaks="None" -> v:SizedImage
+    
+
+    // show both and pick which to use
+    text
+    | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:Image)\nNOTE;CHARSET=utf-8:standardImage\nN;CHARSET=utf-8:Original Size;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:SizedImage)\nNOTE;CHARSET=utf-8:sizedImage\nN;CHARSET=utf-8:Fit in Circle;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:noImage\nN;CHARSET=utf-8:No Image;;;\nEND:VCARD
+    
+    if Equals "standardImage"; getVariable v:Image; otherwise; end
+    if Equals "sizedImage"; getVariable v:SizedImage; otherwise; end
+    if Equals "noImage"; text " "; otherwise; end
+
+    exitShortcut
 otherwise
 end
 
@@ -133,7 +166,8 @@ if Equals "EditItem"
     getVariable mv:ChosenItem{as:Contact,get:Notes} -> mv:Notes
 
     if Equals "setIcon"
-        showAlert message="SetIcon is not implemented yet."
+        runShortcut v:ThisShortcut false ^(Dictionary{ action: ChoosePhoto }) -> mv:NewPhoto
+        v:CardData = setDictionaryValue ^(v:CardData) "photo" mv:NewPhoto
 
         nothing
     otherwise
@@ -169,5 +203,5 @@ if Equals "EditItem"
 otherwise
 end
 
-runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: {name: "", description: "", note: "", photo: ""} }) 
+runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: {name: "", description: "", note: "", photo: " "} }) 
 exitShortcut
