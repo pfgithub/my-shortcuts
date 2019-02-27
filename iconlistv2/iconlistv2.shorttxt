@@ -9,6 +9,38 @@ Comment
 GetDictionaryFromInput
 SetVariable Input
 
+Text "Icon List v2" -> v:ThisShortcut
+
+createfolder service="iCloud Drive" "/IconListV2"
+
+/*
+if ^(Count ^(v:Input) Items) Equals 0
+    getfile a{
+      service="iCloud Drive",
+      showdocumentpicker=false,
+      filepath="/IconListV2/CurrentPage.json",
+      errorifnotfound=false
+    }
+    setVariable v:Input
+    if ^(count Items) Equals 0
+    otherwise
+        chooseFromMenu "Previous edits recovered"
+        | Continue editing
+        | Discard edits
+        case Continue
+        case Discard
+            Dictionary{} -> v:Input
+        end
+    end
+otherwise
+    getVariable v:Input
+end
+
+savefile ^(v:Input) service="iCloud Drive" false "/IconListV2/CurrentPage.json" true
+
+*/
+
+
 /*
 // Usage: Escape "text"
 @defmacro Escape @:text{type:text}
@@ -16,11 +48,10 @@ SetVariable Input
 @defend
 */
 
-Text "Icon List v2" -> v:ThisShortcut
-
 GetVariable v:Input:action
 
 // runShortcut v:ThisShortcut false ^(Dictionary{ action: Escape, text: "text" })
+// escapes a string for use in a vcard
 if Equals "Escape"
     GetVariable v:Input:text
     replacetext "\\" "\\\\"
@@ -31,6 +62,7 @@ otherwise
 end
 
 // runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: {name, description, note, photo?} })
+// creates a text out of a dictionary containing card data
 if Equals "CreateCard" 
     getVariable v:Input:carddata -> v:CardData
 
@@ -40,24 +72,102 @@ if Equals "CreateCard"
         text "PHOTO;ENCODING=b:\(v:CardData:photo)"
     end -> mv:Photo
 
+    if ^(Count "Characters" ^(v:CardData:name)) "Equals" 0
+        text "No Title"
+    otherwise
+        getVariable v:CardData:name
+    end -> mv:Name
+
     text -> mv:Result
     | BEGIN:VCARD
     | VERSION:3.0
-    | NAME;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:name }));;;
-    | ORG;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:description }));;;
-    | NOTE;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:note }));;;
+    | N;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: mv:Name }));;;
+    | ORG;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:description }))
+    | NOTE;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:note }))
     | \(mv:Photo)
     | END:VCARD
 
-    // return as a Contact
-    exitShortcut ^(runShortcut v:ThisShortcut false ^(Dictionary{ action: AsContact, vcard: mv:Result }))
+    // return as text
+    exitShortcut ^(mv:Result)
 otherwise
 end
 
 // runShortcut v:ThisShortcut false ^(Dictionary{ action: AsContact, vcard: "<vCard Text Here>" }) 
+// converts a given vcard string to a contact
 if Equals "AsContact"
     getVariable v:Input:vcard
     setName "a.vcf" -> mv:vCard
     exitShortcut ^(mv:vCard{as:Contact})
 otherwise
 end
+
+if Equals "ChoosePhoto"
+
+
+otherwise
+end
+
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: {name, description, note, photo?} }) 
+// edits a given item
+if Equals "EditItem"
+
+    getVariable v:Input:carddata -> v:CardData
+
+    nothing -> v:ActionList
+    
+    // 
+    text -> mv:vCard
+    | \(runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: v:CardData }))
+    | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:-------;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:setIcon\nN;CHARSET=utf-8:Icon;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:setName\nN;CHARSET=utf-8:Title;;;\nORG;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:name }))\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:setDescription\nN;CHARSET=utf-8:Description;;;\nORG;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:description }))\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:setNote\nN;CHARSET=utf-8:Note (Hidden);;;\nORG;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:note }))\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:-------;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:doneEditing\nN;CHARSET=utf-8:Save;;;\nEND:VCARD
+
+    runShortcut v:ThisShortcut false ^(Dictionary{ action: AsContact, vcard: mv:vCard })
+
+    chooseFromList -> mv:ChosenItem
+
+    getVariable mv:ChosenItem{as:Contact,get:Notes} -> mv:Notes
+
+    if Equals "setIcon"
+        showAlert message="SetIcon is not implemented yet."
+
+        nothing
+    otherwise
+    end
+    
+
+    if Equals "setName"
+        askforinput question="New Name" defaultanswer=v:CardData:name -> mv:NewValue
+        v:CardData = setDictionaryValue ^(v:CardData) "name" mv:NewValue
+
+        nothing
+    otherwise
+    end
+
+    if Equals "setDescription"
+        askforinput question="New Description" defaultanswer=v:CardData:description -> mv:NewValue
+        v:CardData = setDictionaryValue ^(v:CardData) "description" mv:NewValue
+        
+        nothing
+    otherwise
+    end
+
+    if Equals "setNote"
+        askforinput question="New Note" defaultanswer=v:CardData:note -> mv:NewValue
+        v:CardData = setDictionaryValue ^(v:CardData) "note" mv:NewValue
+        
+        nothing
+    otherwise
+    end
+
+    runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: v:CardData }) 
+    exitShortcut
+otherwise
+end
+
+runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: {name: "", description: "", note: "", photo: ""} }) 
+exitShortcut
