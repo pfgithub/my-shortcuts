@@ -1,0 +1,63 @@
+// shortcut: icon list v2
+
+Comment
+| Made by pfg
+| https://routinehub.co/user/pfg
+| /u/pfg___
+| pfg#4865
+
+GetDictionaryFromInput
+SetVariable Input
+
+/*
+// Usage: Escape "text"
+@defmacro Escape @:text{type:text}
+    runShortcut v:ThisShortcut false ^(Dictionary{ action: Escape, text: "\(@:text)" })
+@defend
+*/
+
+Text "Icon List v2" -> v:ThisShortcut
+
+GetVariable v:Input:action
+
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: Escape, text: "text" })
+if Equals "Escape"
+    GetVariable v:Input:text
+    replacetext "\\" "\\\\"
+    replacetext "\n" " "
+    replacetext ";" "\\;"
+    exitShortcut
+otherwise
+end
+
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: {name, description, note, photo?} })
+if Equals "CreateCard" 
+    getVariable v:Input:carddata -> v:CardData
+
+    if ^(Count "Characters" ^(v:CardData:photo)) "Equals" 0
+        text ""
+    otherwise
+        text "PHOTO;ENCODING=b:\(v:CardData:photo)"
+    end -> mv:Photo
+
+    text -> mv:Result
+    | BEGIN:VCARD
+    | VERSION:3.0
+    | NAME;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:name }));;;
+    | ORG;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:description }));;;
+    | NOTE;CHARSET=utf-8:\(runShortcut v:ThisShortcut false ^(Dictionary{ action:Escape, text: v:CardData:note }));;;
+    | \(mv:Photo)
+    | END:VCARD
+
+    // return as a Contact
+    exitShortcut ^(runShortcut v:ThisShortcut false ^(Dictionary{ action: AsContact, vcard: mv:Result }))
+otherwise
+end
+
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: AsContact, vcard: "<vCard Text Here>" }) 
+if Equals "AsContact"
+    getVariable v:Input:vcard
+    setName "a.vcf" -> mv:vCard
+    exitShortcut ^(mv:vCard{as:Contact})
+otherwise
+end
