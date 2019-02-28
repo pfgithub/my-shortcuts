@@ -315,7 +315,7 @@ if Equals "EditList"
 
     repeatWithEach ^(v:Items)
 
-        getVariable v:Items
+        getVariable v:"Repeat Item"
         setdictionaryvalue key="note" value=(v:"Repeat Index") -> mv:CardData
         runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: mv:CardData })
         
@@ -362,7 +362,7 @@ if Equals "EditList"
 
         // insert item back into list at the index
         Dictionary{ action: AddItemAtIndex, list: [], item: mv:NewItem, index: mv:Index } -> mv:Dictionary
-        if ^(count ^(v:Items) Items) Equals 0
+        if ^(count ^(v:Items) Items) Equals 0 // You are not allowed to set dictionary value with an empty value
             getVariable mv:Dictionary
         otherwise
             getVariable mv:Dictionary
