@@ -122,7 +122,7 @@ if Equals "ChoosePhoto"
 otherwise
 end
 
-// runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: {name, description, note, photo?} }) 
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: {name, description, note, photo} }) 
 // edits a given item
 if Equals "EditItem"
 
@@ -185,6 +185,105 @@ if Equals "EditItem"
 otherwise
 end
 
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: NewItem })
+// creates a new list item and starts editing it
+if Equals "NewItem"
+    runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: {name: "", description: "", note: "", photo: " "} })
+
+    exitShortcut
+otherwise
+end
+
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: RemoveItemAtIndex, list: [], index: num })
+// removes a specified item from a given list
+if Equals "RemoveItemAtIndex"
+    getVariable v:Input:index -> v:Index
+    getVariable v:Input:list -> v:List
+    count Items -> v:Length
+
+    // If the list has one item, return an empty list
+    if ^(v:Length) Equals 1
+        list []
+        exitShortcut
+    otherwise
+    end
+
+    // If the index is 1, return 2..
+    if ^(v:Index) Equals 1
+        getitemfromlist ^(v:List) get="Items in Range" 2 v:Length
+        exitShortcut
+    otherwise
+    end
+
+    // If the index is equal to the length, return 1..length-1
+    if ^(v:Index) Equals v:Length
+        getitemfromlist ^(v:List) get="Items in Range" 1 (Calculate ^(v:Length) "-" 1)
+        exitShortcut
+    otherwise
+    end
+
+    // Otherwise get items 1..Index-1 and get items Index+1..Length
+
+    getitemfromlist ^(v:List) get="Items in Range" 1 (Calculate ^(v:Index) "-" 1)
+    setVariable v:ResList
+    getitemfromlist ^(v:List) get="Items in Range" (Calculate ^(v:Index) "+" 1) v:Length
+    addToVariable v:ResList
+
+    exitShortcut
+otherwise
+end
+
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: RemoveItemAtIndex, list: [], item: any, index: num })
+// inserts a specified item at a specified index of a specified list
+if Equals "AddItemAtIndex"
+    getVariable v:Input:index -> v:Index
+    getVariable v:Input:item -> v:ItemToAdd
+    getVariable v:Input:list -> v:List
+    count Items -> v:Length
+
+    // If the list has zero items, return a list with the item
+    if ^(v:Length) Equals 0
+        getVariable v:ItemToAdd
+        exitShortcut
+    otherwise
+    end
+
+    // If the index is 1, return a list with the item and the list
+    if ^(v:Index) Equals 0
+        getVariable v:ItemToAdd
+        setVariable v:ResList
+        getVariable v:List
+        addToVariable v:ResList
+        
+        exitShortcut
+    otherwise
+    end
+
+    // If the index is 1, return a list with the list and the item
+    if ^(v:Index) Equals v:Length
+        getVariable v:List
+        setVariable v:ResList
+        getVariable v:ItemToAdd
+        addToVariable v:ResList
+        
+        exitShortcut
+    otherwise
+    end
+
+    // Otherwise, get items 1..index-1 and index..end and add the item in the middle
+    getitemfromlist ^(v:List) get="Items in Range" 1 (Calculate ^(v:Index) "-" 1)
+    setVariable v:ResList
+
+    getVariable v:ItemToAdd
+    addToVariable v:ResList
+
+    getitemfromlist ^(v:List) get="Items in Range" v:Index v:Length
+    addToVariable v:ResList
+
+    exitShortcut
+otherwise
+end
+
 // runShortcut v:ThisShortcut false ^(Dictionary{ action: EditList, items: [...items] }) 
 // edits a given list of items
 // remember, to pass a list into a dictionary you need to create a dictionary with no list and set dictionary value
@@ -207,6 +306,36 @@ if Equals "EditList"
     | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:-------;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:addItem\nN;CHARSET=utf-8:Add Item;;;\nEND:VCARD
     
+    chooseFromList -> mv:ChosenItem
+    getVariable mv:ChosenItem{as:Contact, get:Notes} -> mv:ChosenData
+
+    if Equals "addItem"
+        runShortcut v:ThisShortcut false ^(Dictionary{ action: NewItem })
+
+        nothing
+    otherwise
+    end
+
+    count Items
+
+    if Equals 0
+        nothing
+    otherwise
+        number mv:ChosenData -> mv:Index
+
+        getVariable v:Items
+        getitemfromlist a{
+          get="Item At Index"
+          index=mv:Index
+        } -> mv:ItemToEdit
+        runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: mv:ItemToEdit })
+
+        // insert item back into list at index
+        // first get items before it, then items after, then combine
+
+        nothing
+    end
+
 
 
 otherwise
