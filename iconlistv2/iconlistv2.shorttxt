@@ -361,8 +361,13 @@ if Equals "EditList"
         runShortcut v:ThisShortcut false -> v:Items
 
         // insert item back into list at the index
-        Dictionary{ action: AddItemAtIndex, list: [], item: mv:NewItem, index: mv:Index }
-        SetDictionaryValue list v:Items
+        Dictionary{ action: AddItemAtIndex, list: [], item: mv:NewItem, index: mv:Index } -> mv:Dictionary
+        if ^(count ^(v:Items) Items) Equals 0
+            getVariable mv:Dictionary
+        otherwise
+            getVariable mv:Dictionary
+            SetDictionaryValue list v:Items
+        end
         runShortcut v:ThisShortcut false -> v:Items
 
         nothing
