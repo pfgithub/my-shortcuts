@@ -194,7 +194,10 @@ if Equals "NewItem"
 otherwise
 end
 
-// runShortcut v:ThisShortcut false ^(Dictionary{ action: RemoveItemAtIndex, list: [], index: num })
+// Dictionary{ action: RemoveItemAtIndex, list: [], index: num }
+// setDictionaryValue list [...items]
+// runShortcut v:ThisShortcut false
+// ---------------------------------
 // removes a specified item from a given list
 if Equals "RemoveItemAtIndex"
     getVariable v:Input:index -> v:Index
@@ -233,7 +236,10 @@ if Equals "RemoveItemAtIndex"
 otherwise
 end
 
-// runShortcut v:ThisShortcut false ^(Dictionary{ action: RemoveItemAtIndex, list: [], item: any, index: num })
+// Dictionary{ action: AddItemAtIndex, list: [], item: any, index: num }
+// setDictionaryValue list [...items]
+// runShortcut v:ThisShortcut false
+// ---------------------------------
 // inserts a specified item at a specified index of a specified list
 if Equals "AddItemAtIndex"
     getVariable v:Input:index -> v:Index
@@ -284,7 +290,12 @@ if Equals "AddItemAtIndex"
 otherwise
 end
 
-// runShortcut v:ThisShortcut false ^(Dictionary{ action: EditList, items: [...items] }) 
+// to move an item, repeat over each item of the list adding an item before it with "Add here" and note index
+
+// Dictionary{ action: EditList, items: [] }
+// setDictionaryValue items [...items]
+// runShortcut v:ThisShortcut false
+// ---------------------------------
 // edits a given list of items
 // remember, to pass a list into a dictionary you need to create a dictionary with no list and set dictionary value
 if Equals "EditList"
@@ -311,6 +322,7 @@ if Equals "EditList"
 
     if Equals "addItem"
         runShortcut v:ThisShortcut false ^(Dictionary{ action: NewItem })
+        addToVariable v:Items
 
         nothing
     otherwise
@@ -328,16 +340,26 @@ if Equals "EditList"
           get="Item At Index"
           index=mv:Index
         } -> mv:ItemToEdit
-        runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: mv:ItemToEdit })
+        runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: mv:ItemToEdit }) -> mv:NewItem
 
-        // insert item back into list at index
-        // first get items before it, then items after, then combine
+        // remove item from list
+        Dictionary{ action: RemoveItemAtIndex, list: [], index: mv:Index }
+        SetDictionaryValue list v:Items
+        runShortcut v:ThisShortcut false -> v:Items
+
+        // insert item back into list at the index
+        Dictionary{ action: AddItemAtIndex, list: [], item: mv:NewItem, index: mv:Index }
+        SetDictionaryValue list v:Items
+        runShortcut v:ThisShortcut false -> v:Items
 
         nothing
     end
 
+    Dictionary{ action: EditList, items: [] }
+    setDictionaryValue items v:Items
+    runShortcut v:ThisShortcut false
 
-
+    exitShortcut
 otherwise
 end
 
