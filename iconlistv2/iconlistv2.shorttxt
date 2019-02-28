@@ -306,7 +306,6 @@ if Equals "EditList"
 
         getVariable ^(v:"Repeat Item")
         setdictionaryvalue key="note" value=(v:"Repeat Index")
-        runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: v:"Repeat Item" })
         
     end repeat
 
@@ -316,6 +315,8 @@ if Equals "EditList"
     | \(mv:CurrentListvCard)
     | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:-------;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:addItem\nN;CHARSET=utf-8:Add Item;;;\nEND:VCARD
+
+    runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: mv:vCard })
     
     chooseFromList -> mv:ChosenItem
     getVariable mv:ChosenItem{as:Contact, get:Notes} -> mv:ChosenData
@@ -363,5 +364,5 @@ if Equals "EditList"
 otherwise
 end
 
-runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: {name: "", description: "", note: "", photo: " "} }) 
+runShortcut v:ThisShortcut false ^(Dictionary{ action: EditList })
 exitShortcut
