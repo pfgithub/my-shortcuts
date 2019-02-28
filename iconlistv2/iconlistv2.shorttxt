@@ -186,6 +186,11 @@ if Equals "EditItem"
     otherwise
     end
 
+    if Equals "doneEditing"
+        exitShortcut ^(v:CardData)
+    otherwise
+    end
+
     runShortcut v:ThisShortcut false ^(Dictionary{ action: EditItem, carddata: v:CardData }) 
     exitShortcut
 otherwise
