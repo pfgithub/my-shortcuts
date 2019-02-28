@@ -85,8 +85,10 @@ if Equals "ChoosePhoto"
     getVariable v:Image{as:Image,get:Height}
     
     if "Is Greater Than" 123
-      resizeimage ^(mv:SelectedPhoto) width="" height=123 -> v:Image
+        getVariable ^(v:Image) -> v:FilledImage
+        resizeimage ^(mv:SelectedPhoto) width="" height=123 -> v:Image
     otherwise
+        resizeimage ^(mv:SelectedPhoto) width="" height=123 -> v:FilledImage
     end
     
     // place on top of a transparent image to make a 123x123
@@ -95,16 +97,19 @@ if Equals "ChoosePhoto"
     resizeimage width=123 height=123 -> mv:TransparentImage
 
     overlayimage ^(mv:TransparentImage) v:Image showimageeditor=false position="Center" -> v:Image
-    overlayimage ^(mv:TransparentImage) v:Image showimageeditor=false position="Center" width=87 height=87 -> v:SizedImage
+    overlayimage ^(mv:TransparentImage) v:Image showimageeditor=false position="Center" width=87 height=87 -> v:FitImage
+    overlayimage ^(mv:TransparentImage) v:FilledImage showimageeditor=false position="Center" -> v:FilledImage
     
     base64encode ^(v:Image) mode="Encode" linebreaks="None" -> v:Image
-    base64encode ^(v:SizedImage) mode="Encode" linebreaks="None" -> v:SizedImage
+    base64encode ^(v:FitImage) mode="Encode" linebreaks="None" -> v:FitImage
+    base64encode ^(v:FilledImage) mode="Encode" linebreaks="None" -> v:FilledImage
     
 
     // show both and pick which to use
     text -> v:vCard
+    | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:FilledImage)\nNOTE;CHARSET=utf-8:filledImage\nN;CHARSET=utf-8:Fill Circle;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:Image)\nNOTE;CHARSET=utf-8:standardImage\nN;CHARSET=utf-8:Original Size;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:SizedImage)\nNOTE;CHARSET=utf-8:sizedImage\nN;CHARSET=utf-8:Fit in Circle;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:FitImage)\nNOTE;CHARSET=utf-8:fitImage\nN;CHARSET=utf-8:Fit in Circle;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:noImage\nN;CHARSET=utf-8:No Image;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:differentPhoto\nN;CHARSET=utf-8:Choose Different Photo;;;\nEND:VCARD
     
@@ -113,8 +118,9 @@ if Equals "ChoosePhoto"
 
     getVariable mv:ChosenItem{as:Contact,get:Notes}
 
+    if Equals "filledImage"; getVariable v:FilledImage; otherwise; end
     if Equals "standardImage"; getVariable v:Image; otherwise; end
-    if Equals "sizedImage"; getVariable v:SizedImage; otherwise; end
+    if Equals "fitImage"; getVariable v:FitImage; otherwise; end
     if Equals "noImage"; text " "; otherwise; end
     if Equals "differentPhoto"; runShortcut v:ThisShortcut false ^(Dictionary{ action: ChoosePhoto }); otherwise; end
 
