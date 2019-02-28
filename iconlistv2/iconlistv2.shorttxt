@@ -266,7 +266,7 @@ if Equals "AddItemAtIndex"
     end
 
     // If the index is 1, return a list with the item and the list
-    if ^(v:Index) Equals 0
+    if ^(v:Index) Equals 1
         getVariable v:ItemToAdd
         setVariable v:ResList
         getVariable v:List
