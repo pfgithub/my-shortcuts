@@ -304,8 +304,9 @@ if Equals "EditList"
 
     repeatWithEach ^(v:Items)
 
-        getVariable ^(v:"Repeat Item")
-        setdictionaryvalue key="note" value=(v:"Repeat Index")
+        getVariable v:Items
+        setdictionaryvalue key="note" value=(v:"Repeat Index") -> mv:CardData
+        runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: mv:CardData })
         
     end repeat
 
@@ -316,7 +317,7 @@ if Equals "EditList"
     | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:-------;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:addItem\nN;CHARSET=utf-8:Add Item;;;\nEND:VCARD
 
-    runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: mv:vCard })
+    runShortcut v:ThisShortcut false ^(Dictionary{ action: AsContact, vcard: mv:vCard })
     
     chooseFromList -> mv:ChosenItem
     getVariable mv:ChosenItem{as:Contact, get:Notes} -> mv:ChosenData
