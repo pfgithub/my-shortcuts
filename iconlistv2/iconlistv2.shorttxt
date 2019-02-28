@@ -319,18 +319,26 @@ if Equals "QuickAdd"
     
     List ["Title/Note/Description\(s:askwhenrun)"]
     repeatWithEach
-        splittext separator="Custom" custom="/" -> mv:TitleNoteDescription
+        if Equals "Title/Note/Description"
+            nothing
+        otherwise
 
-        getitemfromlist ^(mv:TitleNoteDescription) "Item At Index" 1 -> mv:Title
-        getitemfromlist ^(mv:TitleNoteDescription) "Item At Index" 2 -> mv:Note
-        getitemfromlist ^(mv:TitleNoteDescription) "Item At Index" 3 -> mv:Description
-        
-        Dictionary{
-            title: mv:Title
-            note: mv:Note
-            description: mv:Description
-            photo: " "
-        }
+            splittext separator="Custom" custom="/" -> v:TitleNoteDescription
+
+            List ["", "", ""]
+            addToVariable v:TitleNoteDescription // To prevent out of range errors
+
+            getitemfromlist ^(v:TitleNoteDescription) "Item At Index" 1 -> mv:Title
+            getitemfromlist ^(v:TitleNoteDescription) "Item At Index" 2 -> mv:Note
+            getitemfromlist ^(v:TitleNoteDescription) "Item At Index" 3 -> mv:Description
+            
+            Dictionary{
+                name: mv:Title
+                note: mv:Note
+                description: mv:Description
+                photo: " "
+            }
+        end if
     end
     
     exitShortcut
