@@ -301,6 +301,42 @@ if Equals "AddItemAtIndex"
 otherwise
 end
 
+if Equals "QuickAdd"
+    showResult
+    | QuickAdd lets you quickly add a list of items with titles, note values, and descriptions all at once.
+    |
+    | Items should be added as 'Item Title/Note Value/Description'
+    
+
+    choosefrommenu "Use QuickAdd?"
+    | Start QuickAdd
+    | Don't
+    case "start"
+    case "don't"
+        nothing
+        exitShortcut
+    end
+    
+    List ["Title/Note/Description\(s:askwhenrun)"]
+    repeatWithEach
+        splittext separator="Custom" custom="/" -> mv:TitleNoteDescription
+
+        getitemfromlist ^(mv:TitleNoteDescription) "Item At Index" 1 -> mv:Title
+        getitemfromlist ^(mv:TitleNoteDescription) "Item At Index" 2 -> mv:Note
+        getitemfromlist ^(mv:TitleNoteDescription) "Item At Index" 3 -> mv:Description
+        
+        Dictionary{
+            title: mv:Title
+            note: mv:Note
+            description: mv:Description
+            photo: " "
+        }
+    end
+    
+    exitShortcut
+otherwise
+end
+
 // to move an item, repeat over each item of the list adding an item before it with "Add here" and note index
 
 // Dictionary{ action: EditList, items: [] }
@@ -327,6 +363,7 @@ if Equals "EditList"
     | \(mv:CurrentListvCard)
     | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:-------;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:addItem\nN;CHARSET=utf-8:Add Item;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:quickAdd\nN;CHARSET=utf-8:QuickAdd;;;\nEND:VCARD
 
     runShortcut v:ThisShortcut false ^(Dictionary{ action: AsContact, vcard: mv:vCard })
     
@@ -335,6 +372,14 @@ if Equals "EditList"
 
     if Equals "addItem"
         runShortcut v:ThisShortcut false ^(Dictionary{ action: NewItem })
+        addToVariable v:Items
+
+        nothing
+    otherwise
+    end
+
+    if Equals "quickAdd"
+        runShortcut v:ThisShortcut false ^(Dictionary{ action: QuickAdd })
         addToVariable v:Items
 
         nothing
