@@ -9,11 +9,18 @@ Comment
 GetDictionaryFromInput
 SetVariable Input
 
-Text "Icon List v2" -> v:ThisShortcut
+Text "Icon List V2" -> v:ThisShortcut
 
 createfolder service="iCloud Drive" "/IconListV2"
 createfolder service="iCloud Drive" "/IconListV2/MyLists"
 
+Dictionary{
+    name=v:ThisShortcut
+    version="0.1.0"
+} -> mv:CFUDictionary
+getfile "iCloud Drive" false "AutoUpdateData.json" false
+SetDictionaryValue "2140" mv:CFUDictionary
+savefile "iCloud Drive" false "AutoUpdateData.json" true
 
 /*
 // Usage: Escape "text"
