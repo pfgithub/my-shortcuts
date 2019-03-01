@@ -472,7 +472,7 @@ if Equals "EditList"
         case copy
             getVariable mv:CurrentListvCard
             copytoclipboard
-            chooseFromMenu v:StatusText
+            chooseFromMenu "The list has been copied.\n\(v:StatusText)"
             | Continue Editing
             case continue
             end
@@ -533,11 +533,12 @@ if Equals "MainMenu"
         getVariable v:"Repeat Item"{as: File} -> mv:CurrentItem
         runShortcut v:ThisShortcut false ^(Dictionary{ action: Escape, text: (mv:CurrentItem{as:File,get:Name}) }) -> mv:Name
         count ^(mv:CurrentItem) Items -> mv:Count
+        if Equals 1; text "item"; otherwise; text "items"; end -> mv:IfResult
         Text
         | BEGIN:VCARD
         | VERISION:3.0
         | N;CHARSET=utf-8:\(mv:Name);;;
-        | ORG;CHARSET=utf-8:\(mv:Count) items
+        | ORG;CHARSET=utf-8:\(mv:Count) \(mv:IfResult)
         | NOTE;CHARSET=utf-8:editList
         | END:VCARD
     end
