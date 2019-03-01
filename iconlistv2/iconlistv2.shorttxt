@@ -404,7 +404,7 @@ if Equals "EditList"
           overwriteiffileexists=true
         }
         
-        text "✅ This list is saved to `IconListV2/MyLists/\(mv:Filename)`" -> v:StatusText
+        text "✅ This list is saved to `IconListV2/MyLists/\(v:Filename)`" -> v:StatusText
         text -> v:SaveItem
         | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:saveList\nN;CHARSET=utf-8:Save As;;;\nEND:VCARD
     end
