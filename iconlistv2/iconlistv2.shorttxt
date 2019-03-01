@@ -518,7 +518,7 @@ if Equals "MainMenu"
         | VERISION:3.0
         | N;CHARSET=utf-8:\(mv:Name);;;
         | ORG;CHARSET=utf-8:\(mv:Count) items
-        | NOTE;CHARSET=utf-8:editList;;;
+        | NOTE;CHARSET=utf-8:editList
         | END:VCARD
     end
     combinetext separator="New Lines" -> mv:CombinedText
