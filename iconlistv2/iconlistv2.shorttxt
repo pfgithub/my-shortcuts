@@ -432,7 +432,9 @@ if Equals "EditList"
     | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:addItem\nN;CHARSET=utf-8:+ Add Item;;;\nEND:VCARD
     | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:quickAdd\nN;CHARSET=utf-8:QuickAdd;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
     | \(v:SaveItem)
+    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:copyToClipboard\nN;CHARSET=utf-8:Export List;;;\nEND:VCARD
 
     runShortcut v:ThisShortcut false ^(Dictionary{ action: AsContact, vcard: mv:vCard })
     
@@ -458,6 +460,24 @@ if Equals "EditList"
     if Equals "saveList"
         runShortcut v:ThisShortcut false ^(Dictionary{ action: FindUnusedFilename })
         setVariable v:Filename
+
+        text ""
+    otherwise
+    end
+
+    if Equals "copyToClipboard"
+        chooseFromMenu "Copy list to clipboard?"
+        | Copy to clipboard
+        | Nevermind
+        case copy
+            getVariable mv:CurrentListvCard
+            copytoclipboard
+            chooseFromMenu v:StatusText
+            | Continue Editing
+            case continue
+            end
+        case nevermind
+        end
 
         text ""
     otherwise
@@ -547,7 +567,8 @@ if Equals "MainMenu"
         getName -> mv:Name
         
 
-        getFile "iCloud Drive" false "/IconListV2/MyLists/\(mv:Name).iconlist2" false
+        getFile "iCloud Drive" false "/IconListV2/MyLists/\(mv:Name).iconlist2" true
+        setName "a.json"
         getDictionaryValue Value list -> mv:Items
 
         Dictionary{ action: EditList, items: [], filename: mv:Name }
