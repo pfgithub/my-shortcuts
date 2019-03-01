@@ -532,7 +532,11 @@ if Equals "MainMenu"
     repeatWithEach
         getVariable v:"Repeat Item"{as: File} -> mv:CurrentItem
         runShortcut v:ThisShortcut false ^(Dictionary{ action: Escape, text: (mv:CurrentItem{as:File,get:Name}) }) -> mv:Name
-        count ^(mv:CurrentItem) Items -> mv:Count
+        getVariable mv:CurrentItem
+        setName "a.json"
+        getDictionaryValue Value list
+        count Items 
+        calculate "-" 1 -> mv:Count // to remove _blank_
         if Equals 1; text "item"; otherwise; text "items"; end -> mv:IfResult
         Text
         | BEGIN:VCARD
