@@ -411,9 +411,17 @@ if Equals "EditList"
 
     repeatWithEach ^(v:Items)
 
-        getVariable v:"Repeat Item"
-        setdictionaryvalue key="note" value=(v:"Repeat Index") -> mv:CardData
-        runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: mv:CardData })
+        if Equals "_blank_" // to make sure there is always at least one item in the list
+
+            nothing
+
+        otherwise
+
+            getVariable v:"Repeat Item"
+            setdictionaryvalue key="note" value=(v:"Repeat Index") -> mv:CardData
+            runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: mv:CardData })
+
+        end
         
     end repeat
 
@@ -476,19 +484,15 @@ if Equals "EditList"
 
         // insert item back into list at the index
         Dictionary{ action: AddItemAtIndex, list: [], item: mv:NewItem, index: mv:Index } -> mv:Dictionary
-        if ^(count ^(v:Items) Items) Equals 0 // You are not allowed to set dictionary value with an empty value
-            getVariable mv:Dictionary
-        otherwise
-            getVariable mv:Dictionary
-            SetDictionaryValue list v:Items
-        end
+        SetDictionaryValue list v:Items // there is always at least one item so no problem
         runShortcut v:ThisShortcut false -> v:Items
 
         nothing
     end
 
-    Dictionary{ action: EditList, items: [], filename: v:Filename }
+    Dictionary{ action: EditList, items: [], filename: v:Filename } -> mv:Dictionary
     setDictionaryValue items v:Items
+
     runShortcut v:ThisShortcut false
 
     exitShortcut
@@ -532,7 +536,7 @@ if Equals "MainMenu"
 
     if Equals "newList"
         // the new list will have its own save button, we don't need to get the filename now
-        runShortcut v:ThisShortcut false ^(Dictionary{ action: EditList, filename: "" })
+        runShortcut v:ThisShortcut false ^(Dictionary{ action: EditList, filename: "", items: ["_blank_"] })
 
         nothing
     otherwise
@@ -543,7 +547,8 @@ if Equals "MainMenu"
         getName -> mv:Name
         
 
-        getFile "iCloud Drive" false "/IconListV2/MyLists/\(mv:Name).iconlist2" false -> mv:Items
+        getFile "iCloud Drive" false "/IconListV2/MyLists/\(mv:Name).iconlist2" false
+        getDictionaryValue Value list -> mv:Items
 
         Dictionary{ action: EditList, items: [], filename: mv:Name }
         setDictionaryValue items mv:Items
