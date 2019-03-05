@@ -122,11 +122,11 @@ if Equals "ChoosePhoto"
 
     // show both and pick which to use
     text -> v:vCard
-    | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:FilledImage)\nNOTE;CHARSET=utf-8:filledImage\nN;CHARSET=utf-8:Fill Circle;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:Image)\nNOTE;CHARSET=utf-8:standardImage\nN;CHARSET=utf-8:Original Size;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nPHOTO;ENCODING=b:\(v:FitImage)\nNOTE;CHARSET=utf-8:fitImage\nN;CHARSET=utf-8:Fit in Circle;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:noImage\nN;CHARSET=utf-8:No Image;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:differentPhoto\nN;CHARSET=utf-8:Choose Different Photo;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nPHOTO;ENCODING=b:\(v:FilledImage)\nNOTE;CHARSET=utf-8:filledImage\nN;CHARSET=utf-8:Fill Circle;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nPHOTO;ENCODING=b:\(v:Image)\nNOTE;CHARSET=utf-8:standardImage\nN;CHARSET=utf-8:Original Size;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nPHOTO;ENCODING=b:\(v:FitImage)\nNOTE;CHARSET=utf-8:fitImage\nN;CHARSET=utf-8:Fit in Circle;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:noImage\nN;CHARSET=utf-8:No Image;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:differentPhoto\nN;CHARSET=utf-8:Choose Different Photo;;;\nEND:VCARD
     
     @:AsContact{vcard:vCard}
     chooseFromList -> mv:ChosenItem
@@ -156,13 +156,13 @@ if Equals "EditItem"
     // 
     text -> mv:vCard
     | \(@:CreateCard{carddata: v:CardData})
-    | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:setIcon\nN;CHARSET=utf-8:Icon;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:setName\nN;CHARSET=utf-8:Title;;;\nORG;CHARSET=utf-8:\(@:Escape{text: v:CardData:name})\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:setDescription\nN;CHARSET=utf-8:Description;;;\nORG;CHARSET=utf-8:\(@:Escape{text: v:CardData:description})\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:setNote\nN;CHARSET=utf-8:Note (Hidden);;;\nORG;CHARSET=utf-8:\(@:Escape{text: v:CardData:note})\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:doneEditing\nN;CHARSET=utf-8:Save;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:setIcon\nN;CHARSET=utf-8:Icon;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:setName\nN;CHARSET=utf-8:Title;;;\nORG;CHARSET=utf-8:\(@:Escape{text: v:CardData:name})\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:setDescription\nN;CHARSET=utf-8:Description;;;\nORG;CHARSET=utf-8:\(@:Escape{text: v:CardData:description})\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:setNote\nN;CHARSET=utf-8:Note (Hidden);;;\nORG;CHARSET=utf-8:\(@:Escape{text: v:CardData:note})\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:doneEditing\nN;CHARSET=utf-8:Save;;;\nEND:VCARD
 
     @:AsContact{vcard: mv:vCard}
 
@@ -418,7 +418,7 @@ if Equals "EditList"
 
     if ^(count ^(v:Filename) Characters) Equals 0
         text -> v:SaveItem
-        | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:saveList\nN;CHARSET=utf-8:! Save List;;;\nORG;CHARSET=utf-8:This list is not saved and may be lost.\nEND:VCARD
+        | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:saveList\nN;CHARSET=utf-8:! Save List;;;\nORG;CHARSET=utf-8:This list is not saved and may be lost.\nEND:VCARD
 
         text "⚠️ This list is not saved." -> v:StatusText
     otherwise
@@ -436,7 +436,7 @@ if Equals "EditList"
         
         text "✅ This list is saved to `IconListV2/MyLists/\(v:Filename)`" -> v:StatusText
         text -> v:SaveItem
-        | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:saveList\nN;CHARSET=utf-8:Save As;;;\nEND:VCARD
+        | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:saveList\nN;CHARSET=utf-8:Save As;;;\nEND:VCARD
     end
 
     repeatWithEach ^(v:Items)
@@ -458,12 +458,12 @@ if Equals "EditList"
 
     text -> mv:vCard
     | \(mv:CurrentListvCard)
-    | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:addItem\nN;CHARSET=utf-8:+ Add Item;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:quickAdd\nN;CHARSET=utf-8:QuickAdd;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:addItem\nN;CHARSET=utf-8:+ Add Item;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:quickAdd\nN;CHARSET=utf-8:QuickAdd;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
     | \(v:SaveItem)
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:copyToClipboard\nN;CHARSET=utf-8:Export List;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:copyToClipboard\nN;CHARSET=utf-8:Export List;;;\nEND:VCARD
 
     @:AsContact{vcard: mv:vCard}
     
@@ -568,7 +568,7 @@ if Equals "MainMenu"
         if Equals 1; text "item"; otherwise; text "items"; end -> mv:IfResult
         Text
         | BEGIN:VCARD
-        | VERISION:3.0
+        | VERSION:3.0
         | N;CHARSET=utf-8:\(v:Name);;;
         | ORG;CHARSET=utf-8:\(mv:Count) \(mv:IfResult)
         | NOTE;CHARSET=utf-8:editList
@@ -578,8 +578,8 @@ if Equals "MainMenu"
 
     Text -> mv:vCard
     | \(mv:CombinedText)
-    | BEGIN:VCARD\nVERISION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
-    | BEGIN:VCARD\nVERISION:3.0\nNOTE;CHARSET=utf-8:newList\nN;CHARSET=utf-8:+ New List;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nN;CHARSET=utf-8:—————;;;\nEND:VCARD
+    | BEGIN:VCARD\nVERSION:3.0\nNOTE;CHARSET=utf-8:newList\nN;CHARSET=utf-8:+ New List;;;\nEND:VCARD
 
     @:AsContact{vcard: mv:vCard}
 
