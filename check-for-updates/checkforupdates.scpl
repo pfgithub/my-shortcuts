@@ -32,7 +32,7 @@ savefile "iCloud Drive" false "AutoUpdateData.json" true
 }
 
 # Compare Version Numbers
-if Equals "CompareVersions"
+if Equals "CompareVersions" # Todo use javascript to do it in bulk instead of one at a time with shortcuts
     SplitText ^(v:Input:A) Custom "." -> v:CurrentVersion
     SplitText ^(v:Input:B) Custom "." -> v:NewVersion
 
