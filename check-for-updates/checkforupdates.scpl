@@ -1,0 +1,50 @@
+Comment
+| Made by pfg
+| https://routinehub.co/user/pfg
+| /u/pfg___
+| pfg#4865
+
+GetDictionaryFromInput -> v:Input
+
+Text "Check For Updates" -> v:ThisShortcut
+
+
+# CFU Dictionary
+Dictionary{
+    name=v:ThisShortcut
+    version="2.0.0"
+} -> mv:CFUDictionary
+getfile "iCloud Drive" false "AutoUpdateData.json" false
+SetDictionaryValue "2140" mv:CFUDictionary
+savefile "iCloud Drive" false "AutoUpdateData.json" true
+
+# @:IfExists{Exists: @{}, DoesntExist:@{}}
+@set IfExists @{
+    SetVariable __temp // because @: can't set magic variables yet
+    Count Items
+    If Equals 0
+        GetVariable v:__temp
+        @:DoesntExist
+    Otherwise
+        GetVariable v:__temp
+        @:Exists
+    End
+}
+
+# Compare Version Numbers
+if Equals "CompareVersions"
+    SplitText ^(v:Input:A) Custom "." -> v:CurrentVersion
+    SplitText ^(v:Input:B) Custom "." -> v:NewVersion
+
+    Count ^(v:CurrentVersion) Items
+    @:IfExists
+
+else
+end
+
+
+
+if Equals "ListUpdatableShortcuts"
+    
+else
+end
