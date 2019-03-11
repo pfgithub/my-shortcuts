@@ -1,50 +1,110 @@
-Comment
-| Made by pfg
-| https://routinehub.co/user/pfg
-| /u/pfg___
-| pfg#4865
-
-GetDictionaryFromInput -> v:Input
+SetVariable v:Input
 
 Text "Check For Updates" -> v:ThisShortcut
 
-
-# CFU Dictionary
 Dictionary{
-    name=v:ThisShortcut
+    name="Check For Updates"
     version="2.0.0"
 } -> mv:CFUDictionary
 getfile "iCloud Drive" false "AutoUpdateData.json" false
-SetDictionaryValue "2140" mv:CFUDictionary
+SetDictionaryValue 793 mv:CFUDictionary
 savefile "iCloud Drive" false "AutoUpdateData.json" true
 
-# @:IfExists{Exists: @{}, DoesntExist:@{}}
-@set IfExists @{
-    SetVariable __temp // because @: can't set magic variables yet
-    Count Items
-    If Equals 0
-        GetVariable v:__temp
-        @:DoesntExist
-    Otherwise
-        GetVariable v:__temp
-        @:Exists
-    End
-}
 
-# Compare Version Numbers
-if Equals "CompareVersions" # Todo use javascript to do it in bulk instead of one at a time with shortcuts
-    SplitText ^(v:Input:A) Custom "." -> v:CurrentVersion
-    SplitText ^(v:Input:B) Custom "." -> v:NewVersion
+GetVariable v:Input:action
 
-    Count ^(v:CurrentVersion) Items
-    @:IfExists
+@set CompareVersions (runShortcut v:ThisShortcut false ^(Dictionary{ action: CompareVersions, versiondata: @:versiondata }))
+if Equals "CompareVersions"
 
-else
+
 end
 
 
-
-if Equals "ListUpdatableShortcuts"
+@set CheckForUpdates (runShortcut v:ThisShortcut false ^(Dictionary{ action: CheckForUpdates, localdata: @:localdata }))
+if Equals "CheckForUpdates"
     
-else
+    GetVariable v:Input:localdata -> v:LocalData
+    
+    // get all keys
+    GetDictionaryValue "All Keys" ^(v:LocalData)
+    RepeatWithEach
+        
+        GetVariable v:"Repeat Item"
+        
+        
+    End Repeat
+    
 end
+
+
+
+if Equals "MainMenu"
+    List
+    | Check for Updates
+    ChooseFromList "What to do"
+    If Equals "Check for Updates"
+        
+        GetFile "iCloud Drive" false "AutoUpdateData.json" false
+        GetDictionaryFromInput -> v:LocalData
+        GetDictionaryValue "All Keys" ^(v:LocalData)
+        RepeatWithEach
+            
+            GetVariable v:LocalData
+            GetDictionaryValue Value v:"Repeat Item"
+            SetDictionaryValue "type" "RoutineHub"
+            SetDictionaryValue "id" v:"Repeat Item"
+            
+        End Repeat -> v:LocalDataList
+        // use LocalDataList instead
+        @:CheckForUpdates{localdata: v:LocalData}
+        
+    End
+End
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
