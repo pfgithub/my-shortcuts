@@ -1,110 +1,572 @@
-SetVariable v:Input
+getdictionaryfrominput -> mv:"Get Dictionary from Input"
+setvariable Data
 
-Text "Check For Updates" -> v:ThisShortcut
+comment "Created by\n@pfg#4856\nhttps://routinehub.co/user/pfg\n/u/pfg___"
 
-Dictionary{
-    name="Check For Updates"
-    version="2.0.0"
-} -> mv:CFUDictionary
-getfile "iCloud Drive" false "AutoUpdateData.json" false
-SetDictionaryValue 793 mv:CFUDictionary
-savefile "iCloud Drive" false "AutoUpdateData.json" true
+CreateFolder "iCloud Drive" "CFU"
+
+text "Check For Updates" -> mv:ThisShortcut
+
+dictionary {name: mv:ThisShortcut, version: "1.6.1"} -> mv:Dictionary
+getfile showdocumentpicker=false filepath="AutoUpdateData.json" errorifnotfound=false -> mv:"Get File"
+setdictionaryvalue key=793 value=mv:Dictionary -> mv:"Set Dictionary Value"
+savefile askwheretosave=false destinationpath="AutoUpdateData.json" overwriteiffileexists=true -> mv:"Save File"
+comment "Usage:\n\nDictionary(name=shortcut name,version=version)\n\nGet File /Shortcuts/AutoUpdateData.json\n\nSet Dictionary Value (routinehub id, (dictionary magic var))\n\nSave File /Shortcuts/AutoUpdateData.json\n\naction: Compare Versions\ncurrent: current version number\nnew: new version number\nresult: Up to date|New version available\n\naction: Split Decimals\nversion: version number\noutput: {number: first number, next: next version number}\n\n"
+text "AutoUpdateData.json"
+setvariable Filename
+getvariable v:Data.action
+if input=Equals value="Compare Versions"
+	getvariable v:Data.current
+	count Characters -> mv:Count
+	if input=Equals value=0
+		getvariable v:Data.new
+		count Characters -> mv:Count1
+		if input=Equals value=0
+			text "Up to date" -> mv:Text
+			exitshortcut
+		otherwise
+		end
+	otherwise
+	end
+	dictionary {version: v:Data.current, action: "Split Decimals"} -> mv:Dictionary1
+	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut"
+	dictionary {action: "Split Decimals", version: v:Data.new} -> mv:Dictionary2
+	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut1"
+	getdictionaryvalue key=number -> mv:"Get Dictionary Value"
+	if input="Is Greater Than" number=mv:"Run Shortcut".number
+		text "New version available" -> mv:Text1
+		exitshortcut
+	otherwise
+		if input="Is Less Than" number=mv:"Run Shortcut".number
+			text "Up to date" -> mv:Text2
+			exitshortcut
+		otherwise
+			dictionary {action: "Compare Versions", current: mv:"Run Shortcut".next, new: mv:"Run Shortcut1".next} -> mv:Dictionary3
+			runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut2"
+			exitshortcut
+		end
+	end
+	text "Up to date"
+	exitshortcut
+otherwise
+end
+if input=Equals value="Split Decimals"
+	getvariable v:Data.version
+	matchtext pattern="^([0-9]+).?" -> mv:"Match Text"
+	getgroupfrommatchedtext -> mv:"Get Group from Matched Text"
+	count Items -> mv:Count2
+	if input=Equals value=0
+		number 0 -> mv:Number
+	otherwise
+		number mv:"Get Group from Matched Text" -> mv:Number1
+	end -> mv:If4
+	getvariable v:Data.version
+	replacetext findtext="^([0-9]+).?" regularexpression=true -> mv:"Replace Text"
+	dictionary {number: mv:If4, next: mv:"Replace Text"} -> mv:Dictionary4
+	exitshortcut
+otherwise
+end
+if input=Equals value="Pick Shortcut To Update"
+	getvariable v:Data.list
+	getdictionaryfrominput -> mv:"Get Dictionary from Input1"
+	getdictionaryvalue get="All Keys" -> mv:"Get Dictionary Value1"
+	repeatwitheach
+		getvariable v:Data.list
+		getdictionaryvalue key=v:"Repeat Item" -> mv:"Get Dictionary Value2"
+		getdictionaryfrominput -> mv:"Get Dictionary from Input2"
+		setvariable Scut
+		getdictionaryvalue key=data -> mv:"Get Dictionary Value3"
+		setvariable WebData
+		getvariable v:Scut.saved
+		setvariable LocalData
+		comment "id data icon saved name\n\ndata Version\nsaved version\n\n"
+		text "BEGIN:VCARD\nVERSION:3.0\nN:;\(v:Scut.name);;;\nORG:\(v:LocalData.version) -> \(v:WebData.Version);\nPHOTO;ENCODING=b: \(v:Scut.icon)\nEND:VCARD" -> mv:Text4
+	end -> mv:"Repeat with Each"
+	combinetext separator="New Lines" -> mv:"Combine Text"
+	text "\(mv:"Combine Text")\n\nBEGIN:VCARD\nVERSION:3.0\nN;CHARSET=utf-8:Don't Update;;;\nORG;CHARSET=utf-8:;;;\nURL:;\nPHOTO;ENCODING=b: iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAB50lEQVR42u2ZtY6jQRAGz+kxM4LpqY4RomNmZsa3Ol4miJdibwUdtEZmmLZHXVJJTuuz/eOSpnAcx3Ecx3Ecx3GcVWJMMrhGNGUbnsQLmIsYn8fLeAq3oAmr8TT+xwl8jrlI8S9xCv/hUVyO0VmDF3ESS3qESPElHMTTNgOAxD4rN0KE+CG8iTtRYz7CpIyQb2N8Dl8E8bd0fAIjNBy/C8tjPMJEOEIb44fD+BRH0PHPcVLF39bxvTTCS8ynH9/gCA3E38HdKKQ5Qgaz+Mwg3nyEcvEjeFfie5psMMKUjFBIOr6BEbL4FCdU/D3cg0K6I/zA73bx9iPM44J8HsX7KcfrEb7iHJbEOfyEezF5svilzADfsYBJsx+f4LiEz6ohpvAVFlKOf6zix/ATfgkOjK9lhOTjH+E+zOLTlEfYh4/KxgtVRiimFj+Oj3W8/Qj28eEIT1IYYR8+xLEgfj8KdY8wrUfo1fgnOr7FETLYtezFB0H80yC+0RHGTUdoQ3wWhbaM8EaP0K3xE2F8yiPsxfs4quKf6XjTEQzin2M2wn3ENL61HGEZnsGRSC9Hy40whVdwjdUAB/EXTqr4WPcVo/gLj+FqNGETHsdLOj7SCOfwIG5EU1Yb/QSXi47jOI7jOI7jOI7TIIvCXf7hdvLDDQAAAABJRU5ErkJggg==\nEND:VCARD"
+	setname name="\(v:Scut.name).vcf" -> mv:"Set Name"
+	setvariable __temp
+	getvariable v:__temp{as: contact}
+	choosefromlist prompt="Shortcuts with available updates:" -> mv:"Choose from List"
+	if input=Equals value="Don't Update"
+		nothing
+		exitshortcut
+	otherwise
+	end
+	getvariable mv:"Get Dictionary from Input1"
+	getdictionaryvalue key=mv:"Choose from List"
+	getdictionaryfrominput -> mv:"Get Dictionary from Input3"
+	setvariable ShortcutToUpdate
+	getdictionaryvalue key=data -> mv:"Get Dictionary Value4"
+	text "Update for \(v:ShortcutToUpdate.name):\nVersion \(mv:"Get Dictionary Value4".Version)\n\n\(mv:"Get Dictionary Value4".Notes)" -> mv:Text5
+	choosefrommenu prompt=mv:Text5 items=[Update, "I no longer have this shortcut", Back]
+	case
+		getvariable v:ShortcutToUpdate
+		exitshortcut
+	case
+		getfile showdocumentpicker=false filepath=v:Filename errorifnotfound=false -> mv:"Get File1"
+		setdictionaryvalue key=v:ShortcutToUpdate.id value=removed -> mv:"Set Dictionary Value1"
+		savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true -> mv:"Save File1"
+		showresult "This shortcut will no longer be checked for updates unless you run it again."
+		exitshortcut
+	case
+	end -> mv:"Choose from Menu"
+	getvariable v:Data
+	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut3"
+	exitshortcut
+otherwise
+end
+if input=Equals value="List Updatable Shortcuts"
+	dictionary -> mv:Dictionary5
+	setvariable PickToUpdate
+	getvariable v:Data.list
+	repeatwitheach
+		if input=Equals value=removed
+		otherwise
+			text v:"Repeat Item"
+			getdictionaryfrominput
+			getdictionaryvalue key=name -> mv:saved
+			getvariable v:PickToUpdate
+			setdictionaryvalue key=v:"Repeat Item".name value=v:"Repeat Item" -> mv:"Set Dictionary Value2"
+			setvariable PickToUpdate
+		end
+	end -> mv:"Repeat with Each1"
+	getvariable v:PickToUpdate
+	exitshortcut
+otherwise
+end
+
+// todo the new cfu
+// Dictionary {version, check: "RoutineHub", id: "1234"}
+
+/*
+
+Shortcuts/CFU contains:
+[uniqueID: string]: {name: name, version: version}
+
+*/
 
 
-GetVariable v:Input:action
+//
+// {action:"GetLocalShortcutData"}
+//   ->
+// {id:name} // no "removed"
+// Gets shortcut data and resaves it to the local file
+if Equals "UpgradeOldCFUData"
 
-@set CompareVersions (runShortcut v:ThisShortcut false ^(Dictionary{ action: CompareVersions, versiondata: @:versiondata }))
+    Dictionary{} -> v:ResDictionary
+    List["---"] -> v:WarningList
+
+    GetFile "iCloud Drive" false v:Filename false -> mv:LocalData
+    GetDictionaryValue "All Keys"
+    repeatwitheach
+    
+        GetVariable v:"Repeat Item" -> mv:Key
+        GetVariable mv:LocalData
+        GetDictionaryValue "Value" mv:Key -> mv:Value
+        
+        // should be {name: name, version: version}
+        GetVariable mv:Value.name
+        if ^(Count Items) Equals 0
+            GetVariable mv:Value.Name
+        otherwise
+            GetVariable mv:Value.name
+        end -> mv:Name
+        if ^(Count Items) Equals 0
+            // Add Warning
+            Text "A shortcut is missing its name in the cfu dictionary. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0'}"
+            AddToVariable v:WarningList
+        otherwise
+            GetVariable mv:Value.version
+            if ^(Count Items) Equals 0
+                GetVariable mv:Value.Version
+            otherwise
+                GetVariable mv:Value.version
+            end -> mv:Version
+            if ^(Count Items) Equals 0
+                // Add Warning
+                Text "The shortcut `\(mv:Name)` is missing its version in the cfu dictionary. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0'}"
+                AddToVariable v:WarningList
+            otherwise
+                Dictionary{name: mv:Name, version: mv:Version, check: "RoutineHub", id: mv:Key}
+                SaveFile "iCloud Drive" false "CFU/\(mv:Name)" true
+            end
+        end
+        Nothing
+    end
+    
+    // Remove old data
+    GetVariable mv:LocalData
+    DeleteFiles confirmbeforedeleting=false
+    
+    ExitShortcut ^(v:WarningList)
+    
+otherwise
+end
+
+// {action: "DownloadRemoteShortcutData" uniqueid:, localdata:}
+if Equals "DownloadRemoteShortcutData"
+
+    GetVariable v:Data.uniqueid -> mv:UniqueID
+    GetVariable v:Data.localdata -> mv:Value
+
+    // validate shortcut data
+    GetVariable mv:Value.name
+    if ^(Count Items) Equals 0
+        GetVariable mv:Value.Name
+    otherwise
+        GetVariable mv:Value.name
+    end -> mv:Name
+    if ^(Count Items) Equals 0
+        // Add Warning
+        Dictionary{ result: error, message: "The shortcut with the id `\(mv:UniqueID)` is missing its name in its cfu file. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0'}" }
+        ExitShortcut
+    otherwise
+    end
+    GetVariable mv:Value.version
+    if ^(Count Items) Equals 0
+        GetVariable mv:Value.Version
+    otherwise
+        GetVariable mv:Value.version
+    end -> mv:Version
+    if ^(Count Items) Equals 0
+        // Add Warning
+        Dictionary{ result: "error", message: "The shortcut `\(mv:Name)` (`\(mv:UniqueID)`) is missing its version in its cfu file. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0'}" }
+        ExitShortcut
+    otherwise
+    end
+    GetVariable mv:Value.check
+    if ^(Count Items) Equals 0
+        GetVariable mv:Value.Check
+        if ^(Count Items) Equals 0
+            GetVariable mv:Value.service
+            if ^(Count Items) Equals 0
+                GetVariable mv:Value.Service
+            otherwise
+                GetVariable mv:Value.service
+            end
+        otherwise
+            GetVariable mv:Value.Check
+        end
+    otherwise
+        GetVariable mv:Value.check
+    end -> v:Service
+    if ^(Count Items) Equals 0
+        // Add Warning
+        Dictionary{ result: "error", message: "The shortcut `\(mv:Name)` (`\(mv:UniqueID)`) is missing its version in its cfu file. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0'}" }
+        ExitShortcut
+    otherwise
+    end
+    
+    // Download data from web
+    GetVariable v:Service
+    MatchText "routine\\s*hub" casesensitive=false
+    if ^(Count Items) Equals 0
+    otherwise
+        GetVariable mv:Value.id
+        if ^(Count Items) Equals 0
+            GetVariable mv:Value.ID
+        otherwise
+            GetVariable mv:Value.id
+        end -> mv:ID
+        if ^(Count Items) Equals 0
+            // Add Warning
+            Dictionary{ result: error, message: "The shortcut `\(mv:Name)` (`\(mv:UniqueID)`) is missing its routinehub id in its cfu file. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0', Service: 'RoutineHub', ID: '1234'}" }
+            ExitShortcut
+        otherwise
+        end
+        URL "https://routinehub.co/api/v1/shortcuts/\(mv:ID)/versions/latest"
+        GetContentsOfURL -> mv:WebData
+        GetVariable mv:WebData.result
+        if Equals "success"
+            // return version, notes, and download url
+            Dictionary{ result: success, version: mv:WebData.Version, description: mv:WebData.Notes }
+            ExitShortcut
+        otherwise
+            // Add Warning
+            Dictionary{ result: error, message: "The shortcut `\(mv:Name)` (routinehub `\(mv:ID)`) could not be checked for updates because of a routinehub error: \(mv:WebData.message)" }
+            ExitShortcut
+        end
+    end
+    
+    Dictionary{ result: error, message: "The shortcut `\(mv:Name)` (`\(mv:UniqueID)`) uses a service which does not exist or is not supported yet. It uses `\(v:Service) but only `RoutineHub` is supported right now.`" }
+    ExitShortcut
+    
+    /*
+    GetVariable v:Service
+    MatchText "url" casesensitive=false
+    if ^(Count Items) Equals 0
+    otherwise
+        GetVariable mv:Value.jsonpath
+        if ^(Count Items) Equals 0
+            GetVariable mv:Value.JsonPath
+        otherwise
+            GetVariable mv:Value.jsonpath
+        end -> v:JsonPath
+        
+        GetVariable mv:Value.url
+        if ^(Count Items) Equals 0
+            GetVariable mv:Value.URL
+        otherwise
+            GetVariable mv:Value.url
+        end -> v:URL
+    end
+    */
+    Nothing
+otherwise
+end
+
+//
+// {action: "DownloadRemoteShortcutData"}
+//    ->
+// {id: {version: , name: }}
+// Downloads shortcut data off their download pages
+// and save to CFU/__cache
+if Equals "DownloadAllRemoteShortcutData"
+    
+    List ["---"] -> v:WarningList
+    GetFile "iCloud Drive" false "CFU" false -> mv:InstalledShortcuts
+    
+    repeatwitheach ^(mv:InstalledShortcuts)
+    
+        GetName ^(v:"Repeat Item") -> mv:UniqueID
+        GetDictionaryFromInput ^(v:"Repeat Item") -> mv:Value
+        
+
+    end
+    
+otherwise
+end
+
+
 if Equals "CompareVersions"
-
-
+    // Given shortcut webdata+localdata
+otherwise
 end
 
-
-@set CheckForUpdates (runShortcut v:ThisShortcut false ^(Dictionary{ action: CheckForUpdates, localdata: @:localdata }))
-if Equals "CheckForUpdates"
+if Equals "RunCFU"
     
-    GetVariable v:Input:localdata -> v:LocalData
+    List ["---"] -> v:WarningList
     
-    // get all keys
-    GetDictionaryValue "All Keys" ^(v:LocalData)
-    RepeatWithEach
-        
-        GetVariable v:"Repeat Item"
-        
-        
-    End Repeat
+    // Upgrade old data
+    RunShortcut mv:ThisShortcut false
     
+otherwise
 end
 
-
-
-if Equals "MainMenu"
-    List
-    | Check for Updates
-    ChooseFromList "What to do"
-    If Equals "Check for Updates"
-        
-        GetFile "iCloud Drive" false "AutoUpdateData.json" false
-        GetDictionaryFromInput -> v:LocalData
-        GetDictionaryValue "All Keys" ^(v:LocalData)
-        RepeatWithEach
-            
-            GetVariable v:LocalData
-            GetDictionaryValue Value v:"Repeat Item"
-            SetDictionaryValue "type" "RoutineHub"
-            SetDictionaryValue "id" v:"Repeat Item"
-            
-        End Repeat -> v:LocalDataList
-        // use LocalDataList instead
-        @:CheckForUpdates{localdata: v:LocalData}
-        
-    End
-End
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+if input=Equals value="Check For Updates"
+	nothing
+	setvariable Summary
+	getmyshortcuts
+	setvariable "My Shortcuts"
+	getfile showdocumentpicker=false filepath=v:Filename -> mv:"Get File2"
+	setvariable File
+	getvariable v:Data.ids
+	count Items -> mv:Count3
+	if input=Equals value=0
+		text "All your compatible shortcuts are up to date!"
+		setvariable UpToDateText
+		getvariable v:File
+		getdictionaryvalue get="All Keys" key=availableUpdates -> mv:"Get Dictionary Value5"
+	otherwise
+		nothing
+		setvariable UpToDateText
+		getvariable v:Data.ids
+	end
+	repeatwitheach
+		getvariable v:File
+		getdictionaryvalue key=v:"Repeat Item" -> mv:"Get Dictionary Value6"
+		count Items
+		if input=Equals value=0
+			text removed
+		otherwise
+			getvariable mv:"Get Dictionary Value6"
+		end
+		setvariable ShortcutData
+		if input=Equals value=removed
+			nothing
+		otherwise
+			getvariable v:"My Shortcuts"
+			if input=Equals value=v:ShortcutData.name
+			otherwise
+				text "\(v:ShortcutData.name) (routinehub id \(v:"Repeat Item")) might not be installed anymore. If you don't have it anymore, remove it from the Manage Shortcuts button on the main menu."
+				addtovariable Summary
+				text false
+				if input=Equals value=true
+					getvariable v:File
+					setdictionaryvalue key=v:"Repeat Item" value=removed
+					savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true
+					setvariable File
+				end
+				nothing
+			end
+			url "https://routinehub.co/api/v1/shortcuts/\(v:"Repeat Item")/versions/latest" -> mv:URL
+			getcontentsofurl advanced=false -> mv:"Get Contents of URL"
+			setvariable URLCont
+			getdictionaryfrominput -> mv:"Get Dictionary from Input4"
+			getdictionaryvalue key=result -> mv:"Get Dictionary Value7"
+			if input=Equals value=error
+				comment "Add to list with an icon"
+				text "The shortcut \(mv:"Get Dictionary Value6".name)  (routinehub id \(v:"Repeat Item")) could not be checked for updates because of the routinehub error:\n\(mv:"Get Dictionary from Input4".message)"
+				addtovariable Summary
+				getvariable v:File
+				setdictionaryvalue key=v:"Repeat Item" value=removed
+				savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true
+				setvariable File
+			otherwise
+			end
+			getvariable v:File
+			getdictionaryvalue key=v:"Repeat Item" -> mv:Saved
+			dictionary {action: "Compare Versions", current: mv:Saved.version, new: mv:"Get Dictionary from Input4".Version} -> mv:UrlCont
+			runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut4"
+			if input=Equals value="Up to date"
+				nothing
+			otherwise
+				getvariable v:URLCont.URL
+				replacetext findtext="/shortcuts" replacewith="/shortcuts/api/records" -> mv:"Replace Text1"
+				getcontentsofurl
+				getdictionaryvalue key=fields
+				getdictionaryvalue key=icon
+				getdictionaryvalue key=value
+				getdictionaryvalue key=downloadURL -> mv:"Get Dictionary Value8"
+				getcontentsofurl
+				getimagesfrominput
+				resizeimage width=32
+				base64encode linebreaks=None -> mv:"Base64 Encode"
+				dictionary {id: v:"Repeat Item", name: mv:Saved.name, data: mv:"Get Dictionary from Input4", saved: mv:Saved, icon: mv:"Base64 Encode"} -> mv:Dictionary6
+			end -> mv:If9
+		end -> mv:If10
+	end -> mv:"Repeat with Each2"
+	count Items -> mv:Count4
+	text "\n\n" -> mv:Text6
+	setvariable __temp
+	getvariable v:Summary
+	count Items
+	if input=Equals value=0
+	otherwise
+		getvariable v:Summary
+		combinetext separator=Custom custom=v:__temp -> mv:"Combine Text1"
+		showalert message="Some potential errors occured while checking for updates:\n\n\(mv:"Combine Text1")\n\nok=continue\ncancel=stop"
+	end
+	getvariable mv:Count4
+	if input=Equals value=0
+		getvariable v:UpToDateText
+		count Items -> mv:Count5
+		if input=Equals value=0
+		otherwise
+			showresult v:UpToDateText
+		end
+		exitshortcut
+	otherwise
+		getvariable mv:"Repeat with Each2"
+	end -> mv:If11
+	dictionary {action: "List Updatable Shortcuts", list: []} -> mv:Dictionary7
+	setdictionaryvalue key=list value=mv:If11
+	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut5"
+	dictionary {action: "Pick Shortcut To Update", list: mv:"Run Shortcut5"} -> mv:Dictionary8
+	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut6"
+	getdictionaryfrominput -> mv:"Get Dictionary from Input5"
+	setvariable ToUpdate
+	count Items
+	if input=Equals value=0
+		exitshortcut
+	otherwise
+	end
+	getvariable v:ToUpdate
+	setvariable ToUpdate
+	getdictionaryvalue key=data -> mv:"Get Dictionary Value9"
+	dictionary {action: "Install Shortcut", id: v:ToUpdate.id, web: mv:"Get Dictionary Value9", name: v:ToUpdate.name} -> mv:Dictionary9
+	runshortcut shortcut="Check For Updates" showwhilerunning=false
+	exitshortcut
+otherwise
+end
+if input=Equals value="Install Shortcut"
+	getvariable v:Data.web
+	count Items -> mv:Count6
+	if input=Equals value=0
+		url "https://routinehub.co/api/v1/shortcuts/\(v:Data.id)/versions/latest"
+		getcontentsofurl
+	otherwise
+		getvariable v:Data.web
+	end
+	getdictionaryfrominput -> mv:"Get Dictionary from Input6"
+	setvariable VersionData
+	getfile showdocumentpicker=false filepath=v:Filename errorifnotfound=false -> mv:"Get File3"
+	getdictionaryvalue key=v:Data.id -> mv:"Get Dictionary Value10"
+	setdictionaryvalue key=version value=v:VersionData.Version -> mv:"Set Dictionary Value3"
+	getvariable mv:"Get File3"
+	setdictionaryvalue key=v:Data.id value=mv:"Set Dictionary Value3" -> mv:"Set Dictionary Value4"
+	savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true -> mv:"Save File2"
+	url "https://routinehub.co/download/\(v:VersionData.id)"
+	openurls
+	exitshortcut
+otherwise
+end -> mv:If13
+List
+| Check for Updates
+| Add unsupported shortcut
+| Manage Shortcuts
+splittext separator=Custom custom=";"
+repeatwitheach
+	base64encode mode=Decode
+	setvariable __temp
+	getvariable v:__temp{as: contact}
+end
+choosefromlist
+if input=Equals value="Check for Updates"
+	comment "TODO\nMake this check for updates v1\nAdd a v2 that's /devn/cfu.json"
+	dictionary {action: "Check For Updates"} -> mv:Dictionary10
+	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut7"
+	exitshortcut
+otherwise
+end
+if input=Equals value="Add unsupported shortcut"
+	showalert message="To check for updates on a shortcut that does not have cfu integrated, add it here. You need to know the shortcut's name, routinehub id, and what version you downloaded."
+	getmyshortcuts
+	choosefromlist
+	getname
+	setvariable scutname
+	askforinput question="RoutineHub ID for \(v:scutname) " defaultanswer="" -> mv:"Routinehub ID"
+	askforinput question="Your current version (use 0 if you're not sure)" defaultanswer=0 -> mv:Version
+	dictionary {name: v:scutname, version: mv:Version} -> mv:Dictionary11
+	getfile showdocumentpicker=false filepath=v:Filename errorifnotfound=false -> mv:"Get File4"
+	setdictionaryvalue key=mv:"Routinehub ID" value=mv:Dictionary11
+	savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true
+	showresult "Shortcut \(v:scutname) can now be checked for updates."
+	nothing
+otherwise
+end
+if input=Equals value="Manage Shortcuts"
+	dictionary
+	setvariable Upablescuts
+	getfile showdocumentpicker=false filepath=v:Filename errorifnotfound=false
+	setvariable File
+	getdictionaryvalue get="All Keys"
+	repeatwitheach
+		getvariable v:File
+		getdictionaryvalue key=v:"Repeat Item" -> mv:"Get Dictionary Value11"
+		if input=Equals value=removed
+		otherwise
+			getvariable v:Upablescuts
+			setdictionaryvalue key=mv:"Get Dictionary Value11".name value=v:"Repeat Item"
+			setvariable Upablescuts
+		end
+	end
+	getvariable v:Upablescuts
+	choosefromlist prompt="Choose shortcuts to manage" selectmultiple=true selectallinitially=false
+	choosefrommenu prompt="What to do with these shortcuts?" items=["Stop checking for updates"]
+	case
+	end
+	repeatwitheach
+		getvariable v:File
+		setdictionaryvalue key=v:"Repeat Item" value=removed
+		setvariable File
+	end
+	getvariable v:File
+	savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true
+	showresult "Check for updates will no longer check the shortcuts you selected for updates (unless you run them again)"
+	nothing
+otherwise
+end
+nothing
+runshortcut shortcut="Check For Updates" showwhilerunning=false
