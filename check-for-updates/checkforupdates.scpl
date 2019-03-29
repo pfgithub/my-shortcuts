@@ -389,7 +389,10 @@ if Equals "CompareVersions"
         
             // check if installed
             if ^mv:MyShortcuts "Equals" v:RSD.name
-            
+                
+                // is installed
+                // compare version numbers
+                
             otherwise
                 AddToVariable ^(text "The shortcut \(v:RSD.name) is no longer installed") v:WarningList
             end
