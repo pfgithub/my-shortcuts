@@ -372,7 +372,7 @@ if Equals "DownloadAllRemoteShortcutData"
 otherwise
 end
 
-// make sure all shortcuts are installed and up to date and gives them an icon for the menu
+// make sure all shortcuts are installed and up to date and gives them an icon for the menu and make vcards out of them
 // {action: "CompareVersions", shortcutdata: remoteShortcutData[]}
 if Equals "CompareVersions"
 
@@ -392,6 +392,44 @@ if Equals "CompareVersions"
                 
                 // is installed
                 // compare version numbers
+                
+                // data will always be strings inside of a dictionary string value
+                // and as such the data should be safe
+                Dictionary{current: v:RSD.localVersion, new: v:RSD.remoteVersion} -> mv:SafeJSONData
+                
+                // TODO future: compare all at once rather than one at a time
+                Text -> mv:CompareVersionsScript
+                | <html><head></head><body><script>
+                | function cmp (a, b) {
+                |   let pa = a.split('.');
+                |   let pb = b.split('.');
+                |   for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+                |       let na = Number(pa[i]);
+                |       let nb = Number(pb[i]);
+                |       if (isNaN(na)) na = 0;
+                |       if (isNaN(nb)) nb = 0;
+                |       if (na > nb) return 1;
+                |       if (nb > na) return -1;
+                |   }
+                |   return 0;
+                | };
+                | let data = \(mv:SafeJSONData);
+                | document.write(cmp(data.new, data.current));
+                | </script></body></html>
+                URL "data:text/html,\(mv:CompareVersionsScript)"
+                GetContentsOfWebpage
+                // 0 = up to date
+                // 1 = new version abailable
+                // -1 = rollback available
+                if Equals 0
+                    Nothing
+                otherwise
+                    // 1 or -1
+                    // TODO: Get Icon
+                    // GetVariable mv:MyShortcuts
+                    // FilterFiles :filter{name is v:RSD.name}
+                    // GetImagesFromInput
+                end
                 
             otherwise
                 AddToVariable ^(text "The shortcut \(v:RSD.name) is no longer installed") v:WarningList
