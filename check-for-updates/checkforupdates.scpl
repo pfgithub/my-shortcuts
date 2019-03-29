@@ -165,32 +165,37 @@ if Equals "UpgradeOldCFUData"
         GetVariable mv:LocalData
         GetDictionaryValue "Value" mv:Key -> mv:Value
         
-        // should be {name: name, version: version}
-        GetVariable mv:Value.name
-        if ^(Count Items) Equals 0
-            GetVariable mv:Value.Name
+        if ^mv:Value Equals "removed"
         otherwise
+        
+            // should be {name: name, version: version}
             GetVariable mv:Value.name
-        end -> mv:Name
-        if ^(Count Items) Equals 0
-            // Add Warning
-            Text "A shortcut is missing its name in the cfu dictionary. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0'}"
-            AddToVariable v:WarningList
-        otherwise
-            GetVariable mv:Value.version
             if ^(Count Items) Equals 0
-                GetVariable mv:Value.Version
+                GetVariable mv:Value.Name
             otherwise
-                GetVariable mv:Value.version
-            end -> mv:Version
+                GetVariable mv:Value.name
+            end -> mv:Name
             if ^(Count Items) Equals 0
                 // Add Warning
-                Text "The shortcut `\(mv:Name)` is missing its version in the cfu dictionary. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0'}"
+                Text "A shortcut is missing its name in the cfu dictionary. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0'}"
                 AddToVariable v:WarningList
             otherwise
-                Dictionary{name: mv:Name, version: mv:Version, check: "RoutineHub", id: mv:Key}
-                SaveFile "iCloud Drive" false "CFU/\(mv:Name)" true
+                GetVariable mv:Value.version
+                if ^(Count Items) Equals 0
+                    GetVariable mv:Value.Version
+                otherwise
+                    GetVariable mv:Value.version
+                end -> mv:Version
+                if ^(Count Items) Equals 0
+                    // Add Warning
+                    Text "The shortcut `\(mv:Name)` is missing its version in the cfu dictionary. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0'}"
+                    AddToVariable v:WarningList
+                otherwise
+                    Dictionary{name: mv:Name, version: mv:Version, check: "RoutineHub", id: mv:Key}
+                    SaveFile "iCloud Drive" false "CFU/\(mv:Name)" true
+                end
             end
+            
         end
         Nothing
     end
@@ -205,6 +210,9 @@ otherwise
 end
 
 // {action: "DownloadRemoteShortcutData" uniqueid:, localdata:}
+// -> 
+// {result: "error", message: string}
+// | {result: "success", remoteVersion, localVersion, uniqueID, name, description: "", directDownloadURL: ""}
 if Equals "DownloadRemoteShortcutData"
 
     GetVariable v:Data.uniqueid -> mv:UniqueID
@@ -253,7 +261,7 @@ if Equals "DownloadRemoteShortcutData"
     end -> v:Service
     if ^(Count Items) Equals 0
         // Add Warning
-        Dictionary{ result: "error", message: "The shortcut `\(mv:Name)` (`\(mv:UniqueID)`) is missing its version in its cfu file. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0'}" }
+        Dictionary{ result: "error", message: "The shortcut `\(mv:Name)` (`\(mv:UniqueID)`) is missing its service in its cfu file. Their data is: `\(mv:Value)`. If you are the author of this shortcut, make sure your data follows the format {Name: 'name', Version: '1.0.0', Service: see docs for list}" }
         ExitShortcut
     otherwise
     end
@@ -280,10 +288,17 @@ if Equals "DownloadRemoteShortcutData"
         GetVariable mv:WebData.result
         if Equals "success"
             // return version, notes, and download url
-            Dictionary{ result: success, version: mv:WebData.Version, description: mv:WebData.Notes }
+            Dictionary{
+                result: success,
+                remoteVersion: mv:WebData.Version,
+                localVersion: mv:Version,
+                uniqueID: mv:UniqueID,
+                name: mv:Name,
+                description: mv:WebData.Notes,
+                directDownloadURL: "https://routinehub.co/download/\(mv:WebData.id)"
+            }
             ExitShortcut
         otherwise
-            // Add Warning
             Dictionary{ result: error, message: "The shortcut `\(mv:Name)` (routinehub `\(mv:ID)`) could not be checked for updates because of a routinehub error: \(mv:WebData.message)" }
             ExitShortcut
         end
@@ -312,19 +327,19 @@ if Equals "DownloadRemoteShortcutData"
         end -> v:URL
     end
     */
-    Nothing
 otherwise
 end
 
 //
-// {action: "DownloadRemoteShortcutData"}
+// {action: "DownloadAllRemoteShortcutData"}
 //    ->
-// {id: {version: , name: }}
+// [{version, description, directDownloadURL}]
 // Downloads shortcut data off their download pages
 // and save to CFU/__cache
 if Equals "DownloadAllRemoteShortcutData"
     
     List ["---"] -> v:WarningList
+    List ["---"] -> v:Result
     GetFile "iCloud Drive" false "CFU" false -> mv:InstalledShortcuts
     
     repeatwitheach ^(mv:InstalledShortcuts)
@@ -332,15 +347,57 @@ if Equals "DownloadAllRemoteShortcutData"
         GetName ^(v:"Repeat Item") -> mv:UniqueID
         GetDictionaryFromInput ^(v:"Repeat Item") -> mv:Value
         
+        Dictionary {action: DownloadRemoteShortcutData, uniqueid: mv:UniqueID, localdata: mv:Value}
+        RunShortcut mv:ThisShortcut false -> mv:RemoteShortcutData
+        
+        if ^(mv:RemoteShortcutData.result) Equals "error"
+        
+            // Add warning
+            AddToVariable ^(mv:RemoteShortcutData.message) v:WarningList
+            
+        otherwise
+        
+            // Add to result
+            AddToVariable ^(mv:RemoteShortcutData) v:Result
+        
+        end
 
     end
+    
+    Dictionary{warnings: [], result: []}
+    SetDictionaryValue warnings v:WarningList
+    SetDictionaryValue result v:Result
+    ExitShortcut
     
 otherwise
 end
 
-
+// make sure all shortcuts are installed and up to date and gives them an icon for the menu
+// {action: "CompareVersions", shortcutdata: remoteShortcutData[]}
 if Equals "CompareVersions"
-    // Given shortcut webdata+localdata
+
+    GetMyShortcuts -> mv:MyShortcuts // may take a long time
+
+    List ["---"] -> v:WarningList
+    List ["---"] -> v:ShortcutsNeedUpdating
+    
+    repeatwitheach ^(v:Data.shortcutdata)
+        if "Equals" "---"
+        otherwise
+        
+            GetVariable v:"Repeat Item" -> v:RSD
+        
+            // check if installed
+            if ^mv:MyShortcuts "Equals" v:RSD.name
+            
+            otherwise
+                AddToVariable ^(text "The shortcut \(v:RSD.name) is no longer installed") v:WarningList
+            end
+        
+        end
+        Nothing
+    end
+
 otherwise
 end
 
@@ -349,7 +406,31 @@ if Equals "RunCFU"
     List ["---"] -> v:WarningList
     
     // Upgrade old data
+    Dictionary{action:"UpgradeOldCFUData"}
     RunShortcut mv:ThisShortcut false
+    AddToVariable v:WarningList
+    
+    // Download shortcut remote data (very slow)
+    Dictionary{action:"DownloadAllRemoteShortcutData"}
+    RunShortcut mv:ThisShortcut false -> mv:RemoteShortcutData
+    AddToVariable ^(mv:RemoteShortcutData.warnings) v:WarningList
+    
+    // Compare all versions and get back only a list of shortcuts that need upgrading/downgrading
+    
+    // Show all warnings
+    GetVariable v:WarningList
+    RepeatWithEach
+        if Equals "---"; Nothing; otherwise; end
+    End -> v:WarningList
+    Count Items
+    If Equals 0
+    Otherwise
+        ShowResult
+        | A few potential errors occured while checking your shortcuts for updates:
+        | ---
+        | \(CombineText ^(v:WarningList), Custom, (text "\n---\n"))
+        | ---
+    End
     
 otherwise
 end
