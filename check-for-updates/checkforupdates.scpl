@@ -380,6 +380,7 @@ if Equals "CompareVersions"
 
     List ["---"] -> v:WarningList
     List ["---"] -> v:ShortcutsNeedUpdating
+    List ["---"] -> v:ShortcutsUpToDate
     
     repeatwitheach ^(v:Data.shortcutdata)
         if "Equals" "---"
@@ -394,7 +395,7 @@ if Equals "CompareVersions"
                 // compare version numbers
                 
                 // data will always be strings inside of a dictionary string value
-                // and as such the data should be safe
+                // and as such the data *should* be safe
                 Dictionary{current: v:RSD.localVersion, new: v:RSD.remoteVersion} -> mv:SafeJSONData
                 
                 // TODO future: compare all at once rather than one at a time
@@ -408,21 +409,42 @@ if Equals "CompareVersions"
                 |       let nb = Number(pb[i]);
                 |       if (isNaN(na)) na = 0;
                 |       if (isNaN(nb)) nb = 0;
-                |       if (na > nb) return 1;
-                |       if (nb > na) return -1;
+                |       if (na > nb) return "UpdateAvailable";
+                |       if (nb > na) return "RollbackAvailable";
                 |   }
-                |   return 0;
+                |   return "NoChanges";
                 | };
                 | let data = \(mv:SafeJSONData);
                 | document.write(cmp(data.new, data.current));
                 | </script></body></html>
                 URL "data:text/html,\(mv:CompareVersionsScript)"
-                GetContentsOfWebpage
-                // 0 = up to date
-                // 1 = new version abailable
-                // -1 = rollback available
-                if Equals 0
-                    Nothing
+                GetContentsOfWebpage -> mv:UpdateStatus
+                
+                if ^mv:UpdateStatus Equals "NoChanges"
+                    text "Up To Date (\(v:RSD.localVersion) = \(v:RSD.remoteVersion))"
+                otherwise
+                    if Equals "UpdateAvailable"
+                        text "Update (\(v:RSD.localVersion) -> \(v:RSD.remoteVersion))"
+                    otherwise
+                        if Equals "RollbackAvailable"
+                            text "Rollback (\(v:RSD.localVersion) -> \(v:RSD.remoteVersion))"
+                        otherwise
+                            text "Error comparing versions on shortcut \(v:RSD.name). The local version is `\(v:RSD.localVersion)` and the remote version is `\(v:RSD.remoteVersion)`. The SafeJSONData is `\(mv:SafeJSONData). This should never happen. Please report this error to the routinehub page for Check For Updates.`"
+                            AddToVariable v:WarningList
+                        end
+                    end
+                end
+                
+                // TODO!!
+                // filterfiles ^mv:MyShortcuts name=(name)
+                // getimagesfrominput
+                
+                // NoChanges = up to date
+                // UpdateAvailable = new version abailable
+                // RollbackAvailable = rollback available
+                
+                if ^mv:UpdateStatus Equals "NoChanges"
+                    // Add the shortcut to the ShortcutsUpToDate list.
                 otherwise
                     // 1 or -1
                     // TODO: Get Icon
@@ -432,7 +454,7 @@ if Equals "CompareVersions"
                 end
                 
             otherwise
-                AddToVariable ^(text "The shortcut \(v:RSD.name) is no longer installed") v:WarningList
+                AddToVariable ^(text "The shortcut \(v:RSD.name) is no longer installed.") v:WarningList
             end
         
         end
@@ -475,220 +497,3 @@ if Equals "RunCFU"
     
 otherwise
 end
-
-if input=Equals value="Check For Updates"
-	nothing
-	setvariable Summary
-	getmyshortcuts
-	setvariable "My Shortcuts"
-	getfile showdocumentpicker=false filepath=v:Filename -> mv:"Get File2"
-	setvariable File
-	getvariable v:Data.ids
-	count Items -> mv:Count3
-	if input=Equals value=0
-		text "All your compatible shortcuts are up to date!"
-		setvariable UpToDateText
-		getvariable v:File
-		getdictionaryvalue get="All Keys" key=availableUpdates -> mv:"Get Dictionary Value5"
-	otherwise
-		nothing
-		setvariable UpToDateText
-		getvariable v:Data.ids
-	end
-	repeatwitheach
-		getvariable v:File
-		getdictionaryvalue key=v:"Repeat Item" -> mv:"Get Dictionary Value6"
-		count Items
-		if input=Equals value=0
-			text removed
-		otherwise
-			getvariable mv:"Get Dictionary Value6"
-		end
-		setvariable ShortcutData
-		if input=Equals value=removed
-			nothing
-		otherwise
-			getvariable v:"My Shortcuts"
-			if input=Equals value=v:ShortcutData.name
-			otherwise
-				text "\(v:ShortcutData.name) (routinehub id \(v:"Repeat Item")) might not be installed anymore. If you don't have it anymore, remove it from the Manage Shortcuts button on the main menu."
-				addtovariable Summary
-				text false
-				if input=Equals value=true
-					getvariable v:File
-					setdictionaryvalue key=v:"Repeat Item" value=removed
-					savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true
-					setvariable File
-				end
-				nothing
-			end
-			url "https://routinehub.co/api/v1/shortcuts/\(v:"Repeat Item")/versions/latest" -> mv:URL
-			getcontentsofurl advanced=false -> mv:"Get Contents of URL"
-			setvariable URLCont
-			getdictionaryfrominput -> mv:"Get Dictionary from Input4"
-			getdictionaryvalue key=result -> mv:"Get Dictionary Value7"
-			if input=Equals value=error
-				comment "Add to list with an icon"
-				text "The shortcut \(mv:"Get Dictionary Value6".name)  (routinehub id \(v:"Repeat Item")) could not be checked for updates because of the routinehub error:\n\(mv:"Get Dictionary from Input4".message)"
-				addtovariable Summary
-				getvariable v:File
-				setdictionaryvalue key=v:"Repeat Item" value=removed
-				savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true
-				setvariable File
-			otherwise
-			end
-			getvariable v:File
-			getdictionaryvalue key=v:"Repeat Item" -> mv:Saved
-			dictionary {action: "Compare Versions", current: mv:Saved.version, new: mv:"Get Dictionary from Input4".Version} -> mv:UrlCont
-			runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut4"
-			if input=Equals value="Up to date"
-				nothing
-			otherwise
-				getvariable v:URLCont.URL
-				replacetext findtext="/shortcuts" replacewith="/shortcuts/api/records" -> mv:"Replace Text1"
-				getcontentsofurl
-				getdictionaryvalue key=fields
-				getdictionaryvalue key=icon
-				getdictionaryvalue key=value
-				getdictionaryvalue key=downloadURL -> mv:"Get Dictionary Value8"
-				getcontentsofurl
-				getimagesfrominput
-				resizeimage width=32
-				base64encode linebreaks=None -> mv:"Base64 Encode"
-				dictionary {id: v:"Repeat Item", name: mv:Saved.name, data: mv:"Get Dictionary from Input4", saved: mv:Saved, icon: mv:"Base64 Encode"} -> mv:Dictionary6
-			end -> mv:If9
-		end -> mv:If10
-	end -> mv:"Repeat with Each2"
-	count Items -> mv:Count4
-	text "\n\n" -> mv:Text6
-	setvariable __temp
-	getvariable v:Summary
-	count Items
-	if input=Equals value=0
-	otherwise
-		getvariable v:Summary
-		combinetext separator=Custom custom=v:__temp -> mv:"Combine Text1"
-		showalert message="Some potential errors occured while checking for updates:\n\n\(mv:"Combine Text1")\n\nok=continue\ncancel=stop"
-	end
-	getvariable mv:Count4
-	if input=Equals value=0
-		getvariable v:UpToDateText
-		count Items -> mv:Count5
-		if input=Equals value=0
-		otherwise
-			showresult v:UpToDateText
-		end
-		exitshortcut
-	otherwise
-		getvariable mv:"Repeat with Each2"
-	end -> mv:If11
-	dictionary {action: "List Updatable Shortcuts", list: []} -> mv:Dictionary7
-	setdictionaryvalue key=list value=mv:If11
-	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut5"
-	dictionary {action: "Pick Shortcut To Update", list: mv:"Run Shortcut5"} -> mv:Dictionary8
-	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut6"
-	getdictionaryfrominput -> mv:"Get Dictionary from Input5"
-	setvariable ToUpdate
-	count Items
-	if input=Equals value=0
-		exitshortcut
-	otherwise
-	end
-	getvariable v:ToUpdate
-	setvariable ToUpdate
-	getdictionaryvalue key=data -> mv:"Get Dictionary Value9"
-	dictionary {action: "Install Shortcut", id: v:ToUpdate.id, web: mv:"Get Dictionary Value9", name: v:ToUpdate.name} -> mv:Dictionary9
-	runshortcut shortcut="Check For Updates" showwhilerunning=false
-	exitshortcut
-otherwise
-end
-if input=Equals value="Install Shortcut"
-	getvariable v:Data.web
-	count Items -> mv:Count6
-	if input=Equals value=0
-		url "https://routinehub.co/api/v1/shortcuts/\(v:Data.id)/versions/latest"
-		getcontentsofurl
-	otherwise
-		getvariable v:Data.web
-	end
-	getdictionaryfrominput -> mv:"Get Dictionary from Input6"
-	setvariable VersionData
-	getfile showdocumentpicker=false filepath=v:Filename errorifnotfound=false -> mv:"Get File3"
-	getdictionaryvalue key=v:Data.id -> mv:"Get Dictionary Value10"
-	setdictionaryvalue key=version value=v:VersionData.Version -> mv:"Set Dictionary Value3"
-	getvariable mv:"Get File3"
-	setdictionaryvalue key=v:Data.id value=mv:"Set Dictionary Value3" -> mv:"Set Dictionary Value4"
-	savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true -> mv:"Save File2"
-	url "https://routinehub.co/download/\(v:VersionData.id)"
-	openurls
-	exitshortcut
-otherwise
-end -> mv:If13
-List
-| Check for Updates
-| Add unsupported shortcut
-| Manage Shortcuts
-splittext separator=Custom custom=";"
-repeatwitheach
-	base64encode mode=Decode
-	setvariable __temp
-	getvariable v:__temp{as: contact}
-end
-choosefromlist
-if input=Equals value="Check for Updates"
-	comment "TODO\nMake this check for updates v1\nAdd a v2 that's /devn/cfu.json"
-	dictionary {action: "Check For Updates"} -> mv:Dictionary10
-	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut7"
-	exitshortcut
-otherwise
-end
-if input=Equals value="Add unsupported shortcut"
-	showalert message="To check for updates on a shortcut that does not have cfu integrated, add it here. You need to know the shortcut's name, routinehub id, and what version you downloaded."
-	getmyshortcuts
-	choosefromlist
-	getname
-	setvariable scutname
-	askforinput question="RoutineHub ID for \(v:scutname) " defaultanswer="" -> mv:"Routinehub ID"
-	askforinput question="Your current version (use 0 if you're not sure)" defaultanswer=0 -> mv:Version
-	dictionary {name: v:scutname, version: mv:Version} -> mv:Dictionary11
-	getfile showdocumentpicker=false filepath=v:Filename errorifnotfound=false -> mv:"Get File4"
-	setdictionaryvalue key=mv:"Routinehub ID" value=mv:Dictionary11
-	savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true
-	showresult "Shortcut \(v:scutname) can now be checked for updates."
-	nothing
-otherwise
-end
-if input=Equals value="Manage Shortcuts"
-	dictionary
-	setvariable Upablescuts
-	getfile showdocumentpicker=false filepath=v:Filename errorifnotfound=false
-	setvariable File
-	getdictionaryvalue get="All Keys"
-	repeatwitheach
-		getvariable v:File
-		getdictionaryvalue key=v:"Repeat Item" -> mv:"Get Dictionary Value11"
-		if input=Equals value=removed
-		otherwise
-			getvariable v:Upablescuts
-			setdictionaryvalue key=mv:"Get Dictionary Value11".name value=v:"Repeat Item"
-			setvariable Upablescuts
-		end
-	end
-	getvariable v:Upablescuts
-	choosefromlist prompt="Choose shortcuts to manage" selectmultiple=true selectallinitially=false
-	choosefrommenu prompt="What to do with these shortcuts?" items=["Stop checking for updates"]
-	case
-	end
-	repeatwitheach
-		getvariable v:File
-		setdictionaryvalue key=v:"Repeat Item" value=removed
-		setvariable File
-	end
-	getvariable v:File
-	savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true
-	showresult "Check for updates will no longer check the shortcuts you selected for updates (unless you run them again)"
-	nothing
-otherwise
-end
-nothing
-runshortcut shortcut="Check For Updates" showwhilerunning=false
