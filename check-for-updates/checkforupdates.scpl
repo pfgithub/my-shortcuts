@@ -429,15 +429,26 @@ if Equals "CompareVersions"
                         if Equals "RollbackAvailable"
                             text "Rollback (\(v:RSD.localVersion) -> \(v:RSD.remoteVersion))"
                         otherwise
-                            text "Error comparing versions on shortcut \(v:RSD.name). The local version is `\(v:RSD.localVersion)` and the remote version is `\(v:RSD.remoteVersion)`. The SafeJSONData is `\(mv:SafeJSONData). This should never happen. Please report this error to the routinehub page for Check For Updates.`"
-                            AddToVariable v:WarningList
+                            ShowAlert title="Error" message="Error comparing versions on shortcut \(v:RSD.name). The local version is `\(v:RSD.localVersion)` and the remote version is `\(v:RSD.remoteVersion)`. The SafeJSONData is `\(mv:SafeJSONData). This should never happen. Please report this error to the routinehub page for Check For Updates.`"
+                            ShowAlert "Press Cancel" "Press Cancel"
+                            ShowAlert "Press Cancel" "Press Cancel"
+                            ShowAlert "Press Cancel" "Press Cancel"
+                            ShowAlert "Press Cancel" "Please press cancel so the shortcut will exit"
+                            ShowAlert "Press Cancel" "It threw an error and it needs to be canceled"
+                            ShowAlert "Press Cancel" "I can't cancel it from in the shortcut code because Exit Shortcut only exits the current shortcut not all of them"
+                            ShowAlert "Press Cancel" "So you need to press cancel"
+                            Repeat 100000
+                                ShowAlert "Press Cancel" "Press Cancel"
+                            end
                         end
                     end
                 end
                 
                 // TODO!!
-                // filterfiles ^mv:MyShortcuts name=(name)
-                // getimagesfrominput
+                // TODO: Get Icon
+                // GetVariable mv:MyShortcuts
+                // FilterFiles :filter{name is v:RSD.name}
+                // GetImagesFromInput
                 
                 // NoChanges = up to date
                 // UpdateAvailable = new version abailable
@@ -447,10 +458,6 @@ if Equals "CompareVersions"
                     // Add the shortcut to the ShortcutsUpToDate list.
                 otherwise
                     // 1 or -1
-                    // TODO: Get Icon
-                    // GetVariable mv:MyShortcuts
-                    // FilterFiles :filter{name is v:RSD.name}
-                    // GetImagesFromInput
                 end
                 
             otherwise
