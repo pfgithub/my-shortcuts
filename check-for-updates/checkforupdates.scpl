@@ -15,124 +15,53 @@ comment "Usage:\n\nDictionary(name=shortcut name,version=version)\n\nGet File /S
 text "AutoUpdateData.json"
 setvariable Filename
 getvariable v:Data.action
-if input=Equals value="Compare Versions"
-	getvariable v:Data.current
-	count Characters -> mv:Count
-	if input=Equals value=0
-		getvariable v:Data.new
-		count Characters -> mv:Count1
-		if input=Equals value=0
-			text "Up to date" -> mv:Text
-			exitshortcut
-		otherwise
-		end
-	otherwise
-	end
-	dictionary {version: v:Data.current, action: "Split Decimals"} -> mv:Dictionary1
-	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut"
-	dictionary {action: "Split Decimals", version: v:Data.new} -> mv:Dictionary2
-	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut1"
-	getdictionaryvalue key=number -> mv:"Get Dictionary Value"
-	if input="Is Greater Than" number=mv:"Run Shortcut".number
-		text "New version available" -> mv:Text1
-		exitshortcut
-	otherwise
-		if input="Is Less Than" number=mv:"Run Shortcut".number
-			text "Up to date" -> mv:Text2
-			exitshortcut
-		otherwise
-			dictionary {action: "Compare Versions", current: mv:"Run Shortcut".next, new: mv:"Run Shortcut1".next} -> mv:Dictionary3
-			runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut2"
-			exitshortcut
-		end
-	end
-	text "Up to date"
-	exitshortcut
+
+// FROM iconlistv2
+
+@set Escape (runShortcut mv:ThisShortcut false ^(Dictionary{ action: Escape, text: @:text }))
+// @:Escape{text:hi}
+// ————————————————————-----
+// escapes a string for use in a vcard
+if Equals "Escape"
+    GetVariable v:Data.text
+    replacetext "\\" "\\\\"
+    replacetext (Text "\n") " "
+    replacetext ";" "\\;"
+    exitShortcut
 otherwise
 end
-if input=Equals value="Split Decimals"
-	getvariable v:Data.version
-	matchtext pattern="^([0-9]+).?" -> mv:"Match Text"
-	getgroupfrommatchedtext -> mv:"Get Group from Matched Text"
-	count Items -> mv:Count2
-	if input=Equals value=0
-		number 0 -> mv:Number
-	otherwise
-		number mv:"Get Group from Matched Text" -> mv:Number1
-	end -> mv:If4
-	getvariable v:Data.version
-	replacetext findtext="^([0-9]+).?" regularexpression=true -> mv:"Replace Text"
-	dictionary {number: mv:If4, next: mv:"Replace Text"} -> mv:Dictionary4
-	exitshortcut
-otherwise
-end
-if input=Equals value="Pick Shortcut To Update"
-	getvariable v:Data.list
-	getdictionaryfrominput -> mv:"Get Dictionary from Input1"
-	getdictionaryvalue get="All Keys" -> mv:"Get Dictionary Value1"
-	repeatwitheach
-		getvariable v:Data.list
-		getdictionaryvalue key=v:"Repeat Item" -> mv:"Get Dictionary Value2"
-		getdictionaryfrominput -> mv:"Get Dictionary from Input2"
-		setvariable Scut
-		getdictionaryvalue key=data -> mv:"Get Dictionary Value3"
-		setvariable WebData
-		getvariable v:Scut.saved
-		setvariable LocalData
-		comment "id data icon saved name\n\ndata Version\nsaved version\n\n"
-		text "BEGIN:VCARD\nVERSION:3.0\nN:;\(v:Scut.name);;;\nORG:\(v:LocalData.version) -> \(v:WebData.Version);\nPHOTO;ENCODING=b: \(v:Scut.icon)\nEND:VCARD" -> mv:Text4
-	end -> mv:"Repeat with Each"
-	combinetext separator="New Lines" -> mv:"Combine Text"
-	text "\(mv:"Combine Text")\n\nBEGIN:VCARD\nVERSION:3.0\nN;CHARSET=utf-8:Don't Update;;;\nORG;CHARSET=utf-8:;;;\nURL:;\nPHOTO;ENCODING=b: iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAB50lEQVR42u2ZtY6jQRAGz+kxM4LpqY4RomNmZsa3Ol4miJdibwUdtEZmmLZHXVJJTuuz/eOSpnAcx3Ecx3Ecx3GcVWJMMrhGNGUbnsQLmIsYn8fLeAq3oAmr8TT+xwl8jrlI8S9xCv/hUVyO0VmDF3ESS3qESPElHMTTNgOAxD4rN0KE+CG8iTtRYz7CpIyQb2N8Dl8E8bd0fAIjNBy/C8tjPMJEOEIb44fD+BRH0PHPcVLF39bxvTTCS8ynH9/gCA3E38HdKKQ5Qgaz+Mwg3nyEcvEjeFfie5psMMKUjFBIOr6BEbL4FCdU/D3cg0K6I/zA73bx9iPM44J8HsX7KcfrEb7iHJbEOfyEezF5svilzADfsYBJsx+f4LiEz6ohpvAVFlKOf6zix/ATfgkOjK9lhOTjH+E+zOLTlEfYh4/KxgtVRiimFj+Oj3W8/Qj28eEIT1IYYR8+xLEgfj8KdY8wrUfo1fgnOr7FETLYtezFB0H80yC+0RHGTUdoQ3wWhbaM8EaP0K3xE2F8yiPsxfs4quKf6XjTEQzin2M2wn3ENL61HGEZnsGRSC9Hy40whVdwjdUAB/EXTqr4WPcVo/gLj+FqNGETHsdLOj7SCOfwIG5EU1Yb/QSXi47jOI7jOI7jOI7TIIvCXf7hdvLDDQAAAABJRU5ErkJggg==\nEND:VCARD"
-	setname name="\(v:Scut.name).vcf" -> mv:"Set Name"
-	setvariable __temp
-	getvariable v:__temp{as: contact}
-	choosefromlist prompt="Shortcuts with available updates:" -> mv:"Choose from List"
-	if input=Equals value="Don't Update"
-		nothing
-		exitshortcut
-	otherwise
-	end
-	getvariable mv:"Get Dictionary from Input1"
-	getdictionaryvalue key=mv:"Choose from List"
-	getdictionaryfrominput -> mv:"Get Dictionary from Input3"
-	setvariable ShortcutToUpdate
-	getdictionaryvalue key=data -> mv:"Get Dictionary Value4"
-	text "Update for \(v:ShortcutToUpdate.name):\nVersion \(mv:"Get Dictionary Value4".Version)\n\n\(mv:"Get Dictionary Value4".Notes)" -> mv:Text5
-	choosefrommenu prompt=mv:Text5 items=[Update, "I no longer have this shortcut", Back]
-	case
-		getvariable v:ShortcutToUpdate
-		exitshortcut
-	case
-		getfile showdocumentpicker=false filepath=v:Filename errorifnotfound=false -> mv:"Get File1"
-		setdictionaryvalue key=v:ShortcutToUpdate.id value=removed -> mv:"Set Dictionary Value1"
-		savefile askwheretosave=false destinationpath=v:Filename overwriteiffileexists=true -> mv:"Save File1"
-		showresult "This shortcut will no longer be checked for updates unless you run it again."
-		exitshortcut
-	case
-	end -> mv:"Choose from Menu"
-	getvariable v:Data
-	runshortcut shortcut="Check For Updates" showwhilerunning=false -> mv:"Run Shortcut3"
-	exitshortcut
-otherwise
-end
-if input=Equals value="List Updatable Shortcuts"
-	dictionary -> mv:Dictionary5
-	setvariable PickToUpdate
-	getvariable v:Data.list
-	repeatwitheach
-		if input=Equals value=removed
-		otherwise
-			text v:"Repeat Item"
-			getdictionaryfrominput
-			getdictionaryvalue key=name -> mv:saved
-			getvariable v:PickToUpdate
-			setdictionaryvalue key=v:"Repeat Item".name value=v:"Repeat Item" -> mv:"Set Dictionary Value2"
-			setvariable PickToUpdate
-		end
-	end -> mv:"Repeat with Each1"
-	getvariable v:PickToUpdate
-	exitshortcut
+
+
+@set CreateCard (runShortcut mv:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: @:carddata }))
+// runShortcut v:ThisShortcut false ^(Dictionary{ action: CreateCard, carddata: {name, description, note, photo?} })
+// ————————————————————-----
+// creates a text out of a dictionary containing card data
+if Equals "CreateCard" 
+    getVariable v:Data.carddata -> v:CardData
+
+    if ^(Count "Characters" ^(v:CardData:photo)) "Equals" 1
+        text ""
+    otherwise
+        text "PHOTO;ENCODING=b:\(v:CardData:photo)"
+    end -> mv:Photo
+
+    if ^(Count "Characters" ^(v:CardData:name)) "Equals" 0
+        text "No Title"
+    otherwise
+        getVariable v:CardData:name
+    end -> mv:Name
+
+    text -> mv:Result
+    | BEGIN:VCARD
+    | VERSION:3.0
+    | N;CHARSET=utf-8:\(@:Escape{text: mv:Name});;;
+    | ORG;CHARSET=utf-8:\(@:Escape{text: v:CardData:description})
+    | NOTE;CHARSET=utf-8:\(@:Escape{text: v:CardData:note})
+    | \(mv:Photo)
+    | END:VCARD
+
+    // return as text
+    exitShortcut ^(mv:Result)
 otherwise
 end
 
@@ -442,7 +371,10 @@ if Equals "CompareVersions"
                             end
                         end
                     end
-                end
+                end -> mv:IfResult
+                
+                @:CreateCard{carddata: {name: v:RSD.name, description: mv:IfResult, note: v:RSD.name, photo: " "}}
+                SetVariable v:CreatedCard
                 
                 // TODO!!
                 // TODO: Get Icon
@@ -456,8 +388,10 @@ if Equals "CompareVersions"
                 
                 if ^mv:UpdateStatus Equals "NoChanges"
                     // Add the shortcut to the ShortcutsUpToDate list.
+                    AddToVariable ^v:CreatedCard v:ShortcutsUpToDate
                 otherwise
                     // 1 or -1
+                    AddToVariable ^v:CreatedCard v:ShortcutsNeedUpdating
                 end
                 
             otherwise
