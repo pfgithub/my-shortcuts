@@ -65,6 +65,8 @@ if Equals "CreateCard"
 otherwise
 end
 
+// END FROM
+
 // todo the new cfu
 // Dictionary {version, check: "RoutineHub", id: "1234"}
 
@@ -402,6 +404,12 @@ if Equals "CompareVersions"
         Nothing
     end
 
+    Dictionary{warnings:[],needUpdating:[],upToDate:[]}
+    SetDictionaryValue warnings v:WarningList
+    SetDictionaryValue needUpdating v:ShortcutsNeedUpdating
+    SetDictionaryValue upToDate v:ShortcutsUpToDate
+    ExitShortcut
+
 otherwise
 end
 
@@ -420,6 +428,10 @@ if Equals "RunCFU"
     AddToVariable ^(mv:RemoteShortcutData.warnings) v:WarningList
     
     // Compare all versions and get back only a list of shortcuts that need upgrading/downgrading
+    Dictionary{action:"CompareVersions",shortcutdata:[]}
+    SetDictionaryValue shortcutdata mv:RemoteShortcutData
+    RunShortcut mv:ThisShortcut false -> mv:VersionCompareResult
+    AddToVariable ^(mv:VersionCompareResult.warnings) v:WarningList
     
     // Show all warnings
     GetVariable v:WarningList
@@ -436,5 +448,135 @@ if Equals "RunCFU"
         | ---
     End
     
+    List ["--Need Updating--"] -> v:ShortcutList
+    AddToVariable ^mv:VersionCompareResult.needUpdating v:ShortcutList
+    Text "--Up To Date--"
+    AddToVariable v:ShortcutList
+    AddToVariable ^mv:VersionCompareResult.upToDate v:ShortcutList
+    
+    Dictionary {shortcutlist:[], remoteshortcutdata:[]}
+    SetDictionaryValue shortcutlist v:ShortcutList
+    SetDictionaryValue remoteshortcutdata mv:RemoteShortcutData
+    RunShortcut mv:ThisShortcut false
+    
+    ExitShortcut
+    
 otherwise
 end
+
+if Equals "PickToUpdate"
+    
+    GetVariable v:Data.remoteshortcutdata -> v:RSD
+    GetVariable v:ShortcutList
+    RepeatWithEach
+        If Equals "---"; Nothing; Otherwise; End
+    End
+    ChooseFromList "Choose shortcut"
+    ShowAlert title="Error" message="WIP"
+    
+otherwise
+end
+
+RunShortcut ^(Dictionary {action:"RunCFU"}) mv:ThisShortcut false
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
