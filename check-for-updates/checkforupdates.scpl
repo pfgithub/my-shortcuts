@@ -7,7 +7,7 @@ CreateFolder "iCloud Drive" "CFU"
 
 text "Check For Updates" -> mv:ThisShortcut
 
-dictionary {name: mv:ThisShortcut, version: "1.6.1"} -> mv:Dictionary
+dictionary {name: "Check For Updates", version: "1.6.1"} -> mv:Dictionary
 getfile showdocumentpicker=false filepath="AutoUpdateData.json" errorifnotfound=false -> mv:"Get File"
 setdictionaryvalue key=793 value=mv:Dictionary -> mv:"Set Dictionary Value"
 savefile askwheretosave=false destinationpath="AutoUpdateData.json" overwriteiffileexists=true -> mv:"Save File"
@@ -424,8 +424,9 @@ if Equals "RunCFU"
     
     // Download shortcut remote data (very slow)
     Dictionary{action:"DownloadAllRemoteShortcutData"}
-    RunShortcut mv:ThisShortcut false -> mv:RemoteShortcutData
-    AddToVariable ^(mv:RemoteShortcutData.warnings) v:WarningList
+    RunShortcut mv:ThisShortcut false -> mv:DownloadedRemoteShortcutData
+    AddToVariable ^(mv:DownloadedRemoteShortcutData.warnings) v:WarningList
+    GetVariable mv:DownloadedRemoteShortcutData.result -> mv:RemoteShortcutData
     
     // Compare all versions and get back only a list of shortcuts that need upgrading/downgrading
     Dictionary{action:"CompareVersions",shortcutdata:[]}
@@ -454,7 +455,7 @@ if Equals "RunCFU"
     AddToVariable v:ShortcutList
     AddToVariable ^mv:VersionCompareResult.upToDate v:ShortcutList
     
-    Dictionary {shortcutlist:[], remoteshortcutdata:[]}
+    Dictionary {action:"PickToUpdate",shortcutlist:[], remoteshortcutdata:[]}
     SetDictionaryValue shortcutlist v:ShortcutList
     SetDictionaryValue remoteshortcutdata mv:RemoteShortcutData
     RunShortcut mv:ThisShortcut false
