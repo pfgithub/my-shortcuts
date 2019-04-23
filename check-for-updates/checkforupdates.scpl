@@ -346,7 +346,7 @@ if Equals "CompareVersions"
                 |   return "NoChanges";
                 | };
                 | let data = \(mv:SafeJSONData);
-                | document.write(cmp(data.new, data.current));
+                | document.write(cmp(data.current, data.new));
                 | </script></body></html>
                 URL "data:text/html,\(mv:CompareVersionsScript)"
                 GetContentsOfWebpage -> mv:UpdateStatus
@@ -437,7 +437,15 @@ if Equals "RunCFU"
     // Show all warnings
     GetVariable v:WarningList
     RepeatWithEach
-        if Equals "---"; Nothing; otherwise; end
+        if Equals "---"
+            Nothing
+        otherwise
+            If Contains "BEGIN:VCARD"
+                SetName "a.vcf" -> mv:vCard
+                GetVariable mv:vCard{as:Contact}
+            Otherwise
+            End
+        end
     End -> v:WarningList
     Count Items
     If Equals 0
@@ -468,7 +476,7 @@ end
 if Equals "PickToUpdate"
     
     GetVariable v:Data.remoteshortcutdata -> v:RSD
-    GetVariable v:ShortcutList
+    GetVariable v:Data.shortcutlist
     RepeatWithEach
         If Equals "---"; Nothing; Otherwise; End
     End
