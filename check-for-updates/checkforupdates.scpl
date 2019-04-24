@@ -362,27 +362,17 @@ if Equals "CompareVersions"
                         otherwise
                             ShowAlert title="Error" message="Error comparing versions on shortcut \(v:RSD.name). The local version is `\(v:RSD.localVersion)` and the remote version is `\(v:RSD.remoteVersion)`. The SafeJSONData is `\(mv:SafeJSONData). This should never happen. Please report this error to the routinehub page for Check For Updates.`"
                             ShowAlert "Press Cancel" "Press Cancel"
-                            ShowAlert "Press Cancel" "Press Cancel"
-                            ShowAlert "Press Cancel" "Press Cancel"
-                            ShowAlert "Press Cancel" "Please press cancel so the shortcut will exit"
-                            ShowAlert "Press Cancel" "It threw an error and it needs to be canceled"
-                            ShowAlert "Press Cancel" "I can't cancel it from in the shortcut code because Exit Shortcut only exits the current shortcut not all of them"
-                            ShowAlert "Press Cancel" "So you need to press cancel"
-                            Repeat 100000
-                                ShowAlert "Press Cancel" "Press Cancel"
-                            end
                         end
                     end
                 end -> mv:IfResult
                 
-                @:CreateCard{carddata: {name: v:RSD.name, description: mv:IfResult, note: v:RSD.name, photo: " "}}
+                //GetVariable mv:MyShortcuts
+                //FilterFiles :filter{name is v:RSD.name}
+                //GetImagesFromInput
+                Text ""
+                Base64Encode Encode None -> mv:Base64Encoded
+                @:CreateCard{carddata: {name: v:RSD.name, description: mv:IfResult, note: v:RSD.name, photo: mv:Base64Encoded}}
                 SetVariable v:CreatedCard
-                
-                // TODO!!
-                // TODO: Get Icon
-                // GetVariable mv:MyShortcuts
-                // FilterFiles :filter{name is v:RSD.name}
-                // GetImagesFromInput
                 
                 // NoChanges = up to date
                 // UpdateAvailable = new version abailable
@@ -398,6 +388,8 @@ if Equals "CompareVersions"
                 
             otherwise
                 AddToVariable ^(text "The shortcut \(v:RSD.name) is no longer installed.") v:WarningList
+                GetFile "iCloud Drive" false "CFU/\(v:RSD.name)" false
+                DeleteFiles false
             end
         
         end
@@ -465,9 +457,19 @@ if Equals "RunCFU"
     AddToVariable v:ShortcutList
     AddToVariable ^mv:VersionCompareResult.upToDate v:ShortcutList
     
-    Dictionary {action:"PickToUpdate",shortcutlist:[], remoteshortcutdata:[]}
+    Dictionary{} -> v:RemoteShortcutDataDictionary
+    GetVariable mv:RemoteShortcutData
+    RepeatWithEach
+        SetVariable v:RSD
+        GetVariable v:RemoteShortcutDataDictionary
+        SetDictionaryValue v:RSD.name v:RSD
+        SetVariable v:RemoteShortcutDataDictionary
+        Nothing
+    End
+    
+    Dictionary {action:"PickToUpdate",shortcutlist:[], remoteshortcutdata:{}}
     SetDictionaryValue shortcutlist v:ShortcutList
-    SetDictionaryValue remoteshortcutdata mv:RemoteShortcutData
+    SetDictionaryValue remoteshortcutdata v:RemoteShortcutDataDictionary
     RunShortcut mv:ThisShortcut false
     
     ExitShortcut
@@ -477,7 +479,7 @@ end
 
 if Equals "PickToUpdate"
     
-    GetVariable v:Data.remoteshortcutdata -> v:RSD
+    GetVariable v:Data.remoteshortcutdata -> v:RemoteShortcutData
     GetVariable v:Data.shortcutlist
     RepeatWithEach
         If Equals "---"
@@ -487,8 +489,27 @@ if Equals "PickToUpdate"
             GetVariable mv:vCard{as: Contact}
         End
     End
-    ChooseFromList "Choose shortcut"
-    ShowAlert title="Error" message="WIP"
+    ChooseFromList "Choose shortcut" -> mv:ChosenShortcutContact
+    
+    GetVariable mv:ChosenShortcutContact{as:Contact,get:Notes} -> mv:ChosenShortcutName
+    If Equals "---"
+    Otherwise
+        Text
+        |
+        MakeRichTextFromHTML
+        ShowWebpage
+        ChooseFromMenu "What to do?"
+        | \(mv:ChosenShortcutContact{as:Contact,get:Organization})
+        | < Back
+        Case Upgrade
+        Case Back
+        End
+    End
+    
+    Dictionary {action:"PickToUpdate",shortcutlist:[], remoteshortcutdata:{}}
+    SetDictionaryValue shortcutlist v:Data.shortcutlist
+    SetDictionaryValue remoteshortcutdata v:RemoteShortcutData
+    RunShortcut mv:ThisShortcut false
     
 otherwise
 end
