@@ -494,12 +494,17 @@ if Equals "PickToUpdate"
     GetVariable mv:ChosenShortcutContact{as:Contact,get:Notes} -> mv:ChosenShortcutName
     If Equals "---"
     Otherwise
+        GetVariable v:RemoteShortcutData
+        GetDictionaryValue Value mv:ChosenShortcutName -> v:RSD
+        GetVariable mv:ChosenShortcutContact{as:Contact,get:ContactPhoto}
+        Base64Encode -> mv:Base64Encoded
         Text
         |
+        
         MakeRichTextFromHTML
         ShowWebpage
-        ChooseFromMenu "What to do?"
-        | \(mv:ChosenShortcutContact{as:Contact,get:Organization})
+        ChooseFromMenu "\(v:RSD.description)"
+        | \(mv:ChosenShortcutContact{as:Contact,get:Company})
         | < Back
         Case Upgrade
         Case Back
