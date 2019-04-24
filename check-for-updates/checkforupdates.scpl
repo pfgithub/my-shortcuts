@@ -366,13 +366,10 @@ if Equals "CompareVersions"
                     end
                 end -> mv:IfResult
                 
-                Text ""
-                Repeat (Number 0)
-                    GetVariable mv:MyShortcuts
-                    //FilterFiles :filter{name is v:RSD.name}
-                    GetImagesFromInput
-                    ResizeImage 123
-                End
+                GetVariable mv:MyShortcuts
+                Comment "FilterFiles :filter{name is v:RSD.name}"
+                GetImagesFromInput
+                ResizeImage 123
                 Base64Encode Encode None -> mv:Base64Encoded
                 @:CreateCard{carddata: {name: v:RSD.name, description: mv:IfResult, note: v:RSD.name, photo: mv:Base64Encoded}}
                 SetVariable v:CreatedCard
@@ -463,11 +460,14 @@ if Equals "RunCFU"
     Dictionary{} -> v:RemoteShortcutDataDictionary
     GetVariable mv:RemoteShortcutData
     RepeatWithEach
-        SetVariable v:RSD
-        GetVariable v:RemoteShortcutDataDictionary
-        SetDictionaryValue v:RSD.name v:RSD
-        SetVariable v:RemoteShortcutDataDictionary
-        Nothing
+        If Equals "---"
+        Otherwise
+            SetVariable v:RSD
+            GetVariable v:RemoteShortcutDataDictionary
+            SetDictionaryValue v:RSD.name v:RSD
+            SetVariable v:RemoteShortcutDataDictionary
+            Nothing
+        End
     End
     
     Dictionary {action:"PickToUpdate",shortcutlist:[], remoteshortcutdata:{}}
@@ -510,7 +510,7 @@ if Equals "PickToUpdate"
         | .newinversion{background-image:linear-gradient(to top,#2d913e,#2a993d);border-radius:1000px;display:inline;
         | box-shadow:1px 1px 5px rgba(0,0,0,.3);padding:4px;padding-left:0}.nivversion{background-image:
         | linear-gradient(#6fed84,#4cd964)}.nivtext{padding:4px;border-radius:1000px;padding-left:12px;padding-right:12px;
-        | display:inline;font-family:sans-serif}.nivdonetext{color:#fff}
+        | display:inline;font-family:sans-serif}.nivdonetext{color:#fff}.description{word-wrap:break-word}
         Text
         | <!DOCTYPE html>
         | <html>
@@ -523,14 +523,14 @@ if Equals "PickToUpdate"
         |    <div class="title"><img class="img" width="100" height="100" src="data:image/png;base64,\(mv:Base64Encoded)" />
         |        <div>
         |            <div class="titletext">\(v:RSD.name)</div>
-        |            <div class="newinversion">
-        |                <div class="nivtext nivversion">\(v:RSD.version)</div>
-        |                <div class="nivdonetext nivtext">Press Done to get this version</div>
-        |            </div>
         |        </div>
         |    </div>
         |    <div class="description">
-        |        \(MakeHTMLFromRichText ^(MakeRichTextFromMarkdown ^v:RSD.description))
+        |            <div class="newinversion">
+        |                <div class="nivtext nivversion">\(v:RSD.localVersion) -> \(v:RSD.remoteVersion)</div>
+        |                <div class="nivdonetext nivtext">Press Done to get</div>
+        |            </div>
+        |        \(MakeHTMLFromRichText ^(MakeRichTextFromMarkdown ^(Text "\(v:RSD.description)")))
         |    </div>
         |   </div>
         |  </body>
