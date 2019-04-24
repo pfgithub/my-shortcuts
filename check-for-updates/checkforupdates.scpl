@@ -457,9 +457,11 @@ if Equals "RunCFU"
         | ---
     End
     
-    List ["--Need Updating--"] -> v:ShortcutList
+    List ["---"] -> v:ShortcutList
+    @:CreateCard{carddata: {name: "Need Updating", description: "", note: "---", photo: " "}}
+    AddToVariable v:ShortcutList
     AddToVariable ^mv:VersionCompareResult.needUpdating v:ShortcutList
-    Text "--Up To Date--"
+    @:CreateCard{carddata: {name: "Up To Date", description: "", note: "---", photo: " "}}
     AddToVariable v:ShortcutList
     AddToVariable ^mv:VersionCompareResult.upToDate v:ShortcutList
     
@@ -478,7 +480,12 @@ if Equals "PickToUpdate"
     GetVariable v:Data.remoteshortcutdata -> v:RSD
     GetVariable v:Data.shortcutlist
     RepeatWithEach
-        If Equals "---"; Nothing; Otherwise; End
+        If Equals "---"
+            Nothing
+        Otherwise
+            SetName "c.vcf" -> mv:vCard
+            GetVariable mv:vCard{as: Contact}
+        End
     End
     ChooseFromList "Choose shortcut"
     ShowAlert title="Error" message="WIP"
