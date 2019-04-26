@@ -5,7 +5,7 @@ comment "Created by\n@pfg#4856\nhttps://routinehub.co/user/pfg\n/u/pfg___"
 
 comment "Adding CFU support is easy and only takes 3 actions:"
 CreateFolder "iCloud Drive" "CFU"
-dictionary {Name: "Check For Updates", Version: "1.6.1", Service: "RoutineHub", ID: "793"} -> mv:Dictionary
+dictionary {Name: "Check For Updates", Version: "2.0", Service: "RoutineHub", ID: "793"} -> mv:Dictionary
 savefile askwheretosave=false destinationpath="CFU/Check For Updates" overwriteiffileexists=true -> mv:"Save File"
 comment
 | That's it. 3 actions and you have cfu support.
