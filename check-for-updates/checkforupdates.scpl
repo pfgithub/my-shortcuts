@@ -132,7 +132,7 @@ if Equals "UpgradeOldCFUData"
     end
     
     // Remove old data
-    Text "Removing..."
+    Dictionary{"Deleting":"..."}
     SaveFile "iCloud Drive" false v:Filename true
     DeleteFiles confirmbeforedeleting=false
     
@@ -389,7 +389,7 @@ if Equals "CompareVersions"
                 
             otherwise
                 AddToVariable ^(text "The shortcut \(v:RSD.name) is no longer installed.") v:WarningList
-                Text "Deleting..."
+                Dictionary{"Deleting":"..."}
                 SaveFile "iCloud Drive" false "CFU/\(v:RSD.name)" true
                 DeleteFiles false
             end
@@ -544,7 +544,7 @@ if Equals "PickToUpdate"
         | \(mv:ChosenShortcutContact{as:Contact,get:Company})
         | < Back
         Case Upgrade
-            Text "Deleting..."
+            Dictionary{"Deleting":"..."}
             SaveFile "iCloud Drive" false "CFU/\(v:RSD.name)" true
             DeleteFiles false
             OpenURLs ^v:RSD.directDownloadURL
