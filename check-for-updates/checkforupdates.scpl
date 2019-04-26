@@ -347,8 +347,8 @@ if Equals "CompareVersions"
                 |       let nb = Number(pb[i]);
                 |       if (isNaN(na)) na = 0;
                 |       if (isNaN(nb)) nb = 0;
-                |       if (na > nb) return "UpdateAvailable";
-                |       if (nb > na) return "RollbackAvailable";
+                |       if (na > nb) return "RollbackAvailable";
+                |       if (nb > na) return "UpdateAvailable";
                 |   }
                 |   return "NoChanges";
                 | };
