@@ -513,55 +513,20 @@ if Equals "PickToUpdate"
         GetVariable v:RemoteShortcutData
         GetDictionaryValue Value mv:ChosenShortcutName -> v:RSD
         GetVariable mv:ChosenShortcutContact{as:Contact,get:ContactPhoto}
-        Base64Encode -> mv:Base64Encoded
-        Text -> mv:Style
-        | html{height:100%}body{display:grid;grid-template-columns:1fr minmax(0,1000px) 1fr;
-        | background-color:#add8e6;margin:0;height:100%}.content{grid-column:2;background-color:#fff;
-        | padding:10px;margin:10px;border-radius:10px;box-shadow:5px 5px 50px rgba(0,0,0,.3)}
-        | .title{display:grid;grid-template-columns:min-content 1fr}.img{margin:10px;box-shadow:1px 1px 5px rgba(0,0,0,.3);
-        | border-radius:10px}.titletext{padding:10px;font-weight:700;font-size:24pt;font-family:sans-serif}
-        | .newinversion{background-image:linear-gradient(to top,#2d913e,#2a993d);border-radius:1000px;display:inline;
-        | box-shadow:1px 1px 5px rgba(0,0,0,.3);padding:4px;padding-left:0}.nivversion{background-image:
-        | linear-gradient(#6fed84,#4cd964)}.nivtext{padding:4px;border-radius:1000px;padding-left:12px;padding-right:12px;
-        | display:inline;font-family:sans-serif}.nivdonetext{color:#fff}.description{word-wrap:break-word}
-        Text
-        | <!DOCTYPE html>
-        | <html>
-        |  <head>
-        |   <meta name="viewport" content="width=device-width, initial-scale=1">
-        |   <style>\(mv:Style)</style>
-        |  </head>
-        |  <body>
-        |   <div class="content">
-        |    <div class="title"><img class="img" width="100" height="100" src="data:image/png;base64,\(mv:Base64Encoded)" />
-        |        <div>
-        |            <div class="titletext">\(v:RSD.name)</div>
-        |        </div>
-        |    </div>
-        |    <div class="description">
-        |            <div class="newinversion">
-        |                <div class="nivtext nivversion">\(v:RSD.localVersion) -> \(v:RSD.remoteVersion)</div>
-        |                <div class="nivdonetext nivtext">Press Done to get</div>
-        |            </div>
-        |        \(MakeHTMLFromRichText ^(MakeRichTextFromMarkdown ^(Text "\(v:RSD.description)")))
-        |    </div>
-        |   </div>
-        |  </body>
-        | </html>
+        Base64Encode -> mv:Photo
         
-        MakeRichTextFromHTML
-        ShowWebpage
-        ChooseFromMenu "\(v:RSD.description)"
-        | \(mv:ChosenShortcutContact{as:Contact,get:Company})
-        | < Back
-        Case Upgrade
-            Dictionary{"Deleting":"..."}
-            SaveFile "iCloud Drive" false "CFU/\(v:RSD.name)" true
-            DeleteFiles false
-            OpenURLs ^v:RSD.directDownloadURL
+        Dictionary{
+            "photo": mv:Photo,
+            "rsd": {},
+            "description": mv:ChosenShortcutContact{as:Contact,get:Company}
+        }
+        SetDictionaryValue rsd v:RSD
+        RunShortcut mv:ThisShortcut false
+        If Equals "done"
             ExitShortcut
-        Case Back
+        Otherwise
         End
+
     End
     
     Dictionary {action:"PickToUpdate",shortcutlist:[], remoteshortcutdata:{}}
@@ -569,6 +534,64 @@ if Equals "PickToUpdate"
     SetDictionaryValue remoteshortcutdata v:RemoteShortcutData
     RunShortcut mv:ThisShortcut false
     
+otherwise
+end
+
+if Equals "AskToUpdateOneShortcut"
+    GetVariable v:Data.photo -> mv:Base64Encoded
+    GetVariable v:Data.rsd -> v:RSD
+    Text -> mv:Style
+    | html{height:100%}body{display:grid;grid-template-columns:1fr minmax(0,1000px) 1fr;
+    | background-color:#add8e6;margin:0;height:100%}.content{grid-column:2;background-color:#fff;
+    | padding:10px;margin:10px;border-radius:10px;box-shadow:5px 5px 50px rgba(0,0,0,.3)}
+    | .title{display:grid;grid-template-columns:min-content 1fr}.img{margin:10px;box-shadow:1px 1px 5px rgba(0,0,0,.3);
+    | border-radius:10px}.titletext{padding:10px;font-weight:700;font-size:24pt;font-family:sans-serif}
+    | .newinversion{background-image:linear-gradient(to top,#2d913e,#2a993d);border-radius:1000px;display:inline;
+    | box-shadow:1px 1px 5px rgba(0,0,0,.3);padding:4px;padding-left:0}.nivversion{background-image:
+    | linear-gradient(#6fed84,#4cd964)}.nivtext{padding:4px;border-radius:1000px;padding-left:12px;padding-right:12px;
+    | display:inline;font-family:sans-serif}.nivdonetext{color:#fff}.description{word-wrap:break-word}
+    Text
+    | <!DOCTYPE html>
+    | <html>
+    |  <head>
+    |   <meta name="viewport" content="width=device-width, initial-scale=1">
+    |   <meta charset="utf-8">
+    |   <style>\(mv:Style)</style>
+    |  </head>
+    |  <body>
+    |   <div class="content">
+    |    <div class="title"><img class="img" width="100" height="100" src="data:image/png;base64,\(mv:Base64Encoded)" />
+    |        <div>
+    |            <div class="titletext">\(v:RSD.name)</div>
+    |        </div>
+    |    </div>
+    |    <div class="description">
+    |            <div class="newinversion">
+    |                <div class="nivtext nivversion">\(v:RSD.localVersion) -> \(v:RSD.remoteVersion)</div>
+    |                <div class="nivdonetext nivtext">Press Done to get</div>
+    |            </div>
+    |        \(MakeHTMLFromRichText ^(MakeRichTextFromMarkdown ^(Text "\(v:RSD.description)")))
+    |    </div>
+    |   </div>
+    |  </body>
+    | </html>
+    
+    MakeRichTextFromHTML
+    ShowWebpage
+    ChooseFromMenu "\(v:RSD.description)"
+    | \(v:Data.description)
+    | < Back
+    Case Upgrade
+        Dictionary{"Deleting":"..."}
+        SaveFile "iCloud Drive" false "CFU/\(v:RSD.name)" true
+        DeleteFiles false
+        OpenURLs ^v:RSD.directDownloadURL
+        Text "done"
+        ExitShortcut
+    Case Back
+    End
+    
+    ExitShortcut
 otherwise
 end
 
