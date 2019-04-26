@@ -591,6 +591,7 @@ if Equals "AskToUpdateOneShortcut"
     Case Back
     End
     
+    Nothing
     ExitShortcut
 otherwise
 end
