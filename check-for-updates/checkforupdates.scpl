@@ -362,10 +362,10 @@ if Equals "CompareVersions"
                     text "Up To Date (\(v:RSD.localVersion) = \(v:RSD.remoteVersion))"
                 otherwise
                     if Equals "UpdateAvailable"
-                        text "Update (\(v:RSD.localVersion) -> \(v:RSD.remoteVersion))"
+                        text "Update (\(v:RSD.localVersion) → \(v:RSD.remoteVersion))"
                     otherwise
                         if Equals "RollbackAvailable"
-                            text "Rollback (\(v:RSD.localVersion) -> \(v:RSD.remoteVersion))"
+                            text "Rollback (\(v:RSD.localVersion) ↘ \(v:RSD.remoteVersion))"
                         otherwise
                             ShowAlert title="Error" message="Error comparing versions on shortcut \(v:RSD.name). The local version is `\(v:RSD.localVersion)` and the remote version is `\(v:RSD.remoteVersion)`. The SafeJSONData is `\(mv:SafeJSONData). This should never happen. Please report this error to the routinehub page for Check For Updates.`"
                             ShowAlert "Press Cancel" "Press Cancel"
