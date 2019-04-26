@@ -516,6 +516,7 @@ if Equals "PickToUpdate"
         Base64Encode -> mv:Photo
         
         Dictionary{
+            "action": "AskToUpdateOneShortcut"
             "photo": mv:Photo,
             "rsd": {},
             "description": mv:ChosenShortcutContact{as:Contact,get:Company}
