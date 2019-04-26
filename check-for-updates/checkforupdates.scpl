@@ -3,15 +3,21 @@ setvariable Data
 
 comment "Created by\n@pfg#4856\nhttps://routinehub.co/user/pfg\n/u/pfg___"
 
+comment "Adding CFU support is easy and only takes 3 actions:"
 CreateFolder "iCloud Drive" "CFU"
+dictionary {Name: "Check For Updates", Version: "1.6.1", Service: "RoutineHub", ID: "793"} -> mv:Dictionary
+savefile askwheretosave=false destinationpath="CFU/Check For Updates by pfg" overwriteiffileexists=true -> mv:"Save File"
+comment
+| That's it. 3 actions and you have cfu support.
+
+comment
+| This shortcut's code starts below.
+| This shortcut was programmed in ScPL.
+| Source code: https://github.com/pfgithub/my-shortcuts/blob/master/check-for-updates/checkforupdates.scpl
 
 text "Check For Updates" -> mv:ThisShortcut
 
-dictionary {name: "Check For Updates", version: "1.6.1"} -> mv:Dictionary
-getfile showdocumentpicker=false filepath="AutoUpdateData.json" errorifnotfound=false -> mv:"Get File"
-setdictionaryvalue key=793 value=mv:Dictionary -> mv:"Set Dictionary Value"
-savefile askwheretosave=false destinationpath="AutoUpdateData.json" overwriteiffileexists=true -> mv:"Save File"
-comment "Usage:\n\nDictionary(name=shortcut name,version=version)\n\nGet File /Shortcuts/AutoUpdateData.json\n\nSet Dictionary Value (routinehub id, (dictionary magic var))\n\nSave File /Shortcuts/AutoUpdateData.json\n\naction: Compare Versions\ncurrent: current version number\nnew: new version number\nresult: Up to date|New version available\n\naction: Split Decimals\nversion: version number\noutput: {number: first number, next: next version number}\n\n"
+
 text "AutoUpdateData.json"
 setvariable Filename
 getvariable v:Data.action
