@@ -421,6 +421,11 @@ if Equals "RunCFU"
     Dictionary{action:"UpgradeOldCFUData"}
     RunShortcut mv:ThisShortcut false
     AddToVariable v:WarningList
+
+    ChooseFromMenu ""
+    | Check for updates on \(Count ^(GetFile "iCloud Drive" false "CFU" false) Items)?
+    Case
+    End
     
     // Download shortcut remote data (very slow)
     Dictionary{action:"DownloadAllRemoteShortcutData"}
