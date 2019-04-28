@@ -427,8 +427,8 @@ if Equals "RunCFU"
     | Add unsupported shortcut
     Case cfu
     Case add unsupported
-        GetMyShortcuts
         Dictionary{} -> v:ShortcutData
+        GetMyShortcuts
         Text "\(ChooseFromList "Pick shortcut to add")" -> mv:ShortcutName
         v:ShortcutData = SetDictionaryValue ^v:ShortcutData name mv:ShortcutName
         v:ShortcutData = SetDictionaryValue ^v:ShortcutData version "0"
