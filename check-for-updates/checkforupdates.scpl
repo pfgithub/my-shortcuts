@@ -435,12 +435,12 @@ if Equals "RunCFU"
         ChooseFromMenu "Service"
         | RoutineHub
         case RoutineHub
-            v:ShortcutData = SetDictionaryValue ^v:ShortcutData name (AskForInput "RoutineHub ID" inputtype="Number")
+            v:ShortcutData = SetDictionaryValue ^v:ShortcutData id (AskForInput "RoutineHub ID" inputtype="Number")
             v:ShortcutData = SetDictionaryValue ^v:ShortcutData service RoutineHub
         end
         // download this shortcut's data
         GetVariable v:ShortcutData
-        SaveFile "iCloud Drive" 
+        SaveFile "iCloud Drive" false "CFU/\(mv:ShortcutName)" true
         Dictionary{action: "DownloadRemoteShortcutData",uniqueid: mv:ShortcutName, localdata: v:ShortcutData}
         RunShortcut mv:ThisShortcut false -> mv:RSD
         if ^mv:RSD.result Equals "error"
@@ -449,7 +449,7 @@ if Equals "RunCFU"
             v:ShortcutData = SetDictionaryValue ^v:ShortcutData version mv:RSD.remoteVersion
         end
         GetVariable v:ShortcutData
-        SaveFile "iCloud Drive" 
+        SaveFile "iCloud Drive" false "CFU/\(mv:ShortcutName)" true
         Dictionary{action: "DownloadRemoteShortcutData",uniqueid: mv:ShortcutName, localdata: v:ShortcutData}
         ExitShortcut
     End
@@ -610,7 +610,7 @@ if Equals "AskToUpdateOneShortcut"
     | \(v:Data.description)
     | < Back
     Case Upgrade
-        GetFile "iCloud Drive" false "CFU/\(v:RSD.uniqueID)" false
+        GetFile "iCloud Drive" false "CFU/\(v:RSD.uniqueID).json" false
         SetDictionaryValue version v:RSD.remoteVersion // version is checked before Version
         SaveFile "iCloud Drive" false "CFU/\(v:RSD.uniqueID)" true
         OpenURLs ^v:RSD.directDownloadURL
