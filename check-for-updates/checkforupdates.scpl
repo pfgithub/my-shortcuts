@@ -396,7 +396,7 @@ if Equals "CompareVersions"
             otherwise
                 AddToVariable ^(text "The shortcut \(v:RSD.name) is no longer installed.") v:WarningList
                 Dictionary{"Deleting":"..."}
-                SaveFile "iCloud Drive" false "CFU/\(v:RSD.name)" true
+                SaveFile "iCloud Drive" false "CFU/\(v:RSD.uniqueID)" true
                 DeleteFiles false
             end
         
@@ -424,7 +424,34 @@ if Equals "RunCFU"
 
     ChooseFromMenu ""
     | Check for updates on \(Count ^(GetFile "iCloud Drive" false "CFU" false) Items) shortcuts
-    Case
+    | Add unsupported shortcut
+    Case cfu
+    Case add unsupported
+        GetMyShortcuts
+        Dictionary{} -> v:ShortcutData
+        Text "\(ChooseFromList "Pick shortcut to add")" -> mv:ShortcutName
+        v:ShortcutData = SetDictionaryValue ^v:ShortcutData name mv:ShortcutName
+        v:ShortcutData = SetDictionaryValue ^v:ShortcutData version "0"
+        ChooseFromMenu "Service"
+        | RoutineHub
+        case RoutineHub
+            v:ShortcutData = SetDictionaryValue ^v:ShortcutData name (AskForInput "RoutineHub ID" inputtype="Number")
+            v:ShortcutData = SetDictionaryValue ^v:ShortcutData service RoutineHub
+        end
+        // download this shortcut's data
+        GetVariable v:ShortcutData
+        SaveFile "iCloud Drive" 
+        Dictionary{action: "DownloadRemoteShortcutData",uniqueid: mv:ShortcutName, localdata: v:ShortcutData}
+        RunShortcut mv:ThisShortcut false -> mv:RSD
+        if ^mv:RSD.result Equals "error"
+            ShowResult "The chosen shortcut could not be added to check for updates because of the error: \(mv:RSD.message)"
+        otherwise
+            v:ShortcutData = SetDictionaryValue ^v:ShortcutData version mv:RSD.remoteVersion
+        end
+        GetVariable v:ShortcutData
+        SaveFile "iCloud Drive" 
+        Dictionary{action: "DownloadRemoteShortcutData",uniqueid: mv:ShortcutName, localdata: v:ShortcutData}
+        ExitShortcut
     End
     
     // Download shortcut remote data (very slow)
@@ -583,9 +610,9 @@ if Equals "AskToUpdateOneShortcut"
     | \(v:Data.description)
     | < Back
     Case Upgrade
-        Dictionary{"Deleting":"..."}
-        SaveFile "iCloud Drive" false "CFU/\(v:RSD.name)" true
-        DeleteFiles false
+        GetFile "iCloud Drive" false "CFU/\(v:RSD.uniqueID)" false
+        SetDictionaryValue version v:RSD.remoteVersion // version is checked before Version
+        SaveFile "iCloud Drive" false "CFU/\(v:RSD.uniqueID)" true
         OpenURLs ^v:RSD.directDownloadURL
         Text "done"
         ExitShortcut
